@@ -1,30 +1,12 @@
 const STATUS_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_STATUSES_PER_GROUP = 500;
 const statusesByGroup = new Map();
+const { isGroupStatusMention } = require('./mediaContent');
 
 function isGroupStatusPost(waMessage) {
   const groupId = waMessage?.key?.remoteJid;
   if (!groupId || !groupId.endsWith('@g.us') || waMessage.key.fromMe) return false;
-
-  let current = waMessage.message;
-  let guard = 0;
-  while (current && guard < 5) {
-    guard++;
-    if (current.groupStatusMessage) return true;
-
-    const wrapper = current.ephemeralMessage
-      || current.viewOnceMessage
-      || current.viewOnceMessageV2
-      || current.viewOnceMessageV2Extension
-      || current.documentWithCaptionMessage
-      || current.editedMessage
-      || current.messageContextInfo
-      || current.groupMentionedMessage;
-    if (!wrapper?.message) break;
-    current = wrapper.message;
-  }
-
-  return false;
+  return isGroupStatusMention(waMessage);
 }
 
 function pruneGroup(groupStatuses, now = Date.now()) {

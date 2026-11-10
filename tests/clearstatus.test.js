@@ -55,6 +55,20 @@ test('only incoming groupStatusMessage posts are tracked', () => {
   );
 });
 
+test('Status shares identified by message metadata are tracked for clearing', () => {
+  const groupId = 'clearstatus-metadata@g.us';
+  trackGroupStatus({
+    key: { remoteJid: groupId, id: 'metadata-status', participant: 'member@s.whatsapp.net' },
+    message: { extendedTextMessage: { text: 'Status' } },
+    statusMentionMessageInfo: { quotedStatus: { videoMessage: {} } },
+  });
+
+  assert.deepEqual(
+    getTrackedGroupStatuses(groupId).map((entry) => entry.key.id),
+    ['metadata-status']
+  );
+});
+
 test('clearstatus deletes tracked member posts and keeps admin posts', async () => {
   const groupId = 'clearstatus-run@g.us';
   trackGroupStatus(statusMessage(groupId, 'member-status', 'member@s.whatsapp.net'));
