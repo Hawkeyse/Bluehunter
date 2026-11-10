@@ -4,6 +4,14 @@ const CHANGELOG = [
   {
     date: '2026-11-10',
     notes: [
+      'After BlueHunter moderates a member, a short "sorry" or "my bad" gets a calm, direct acknowledgment even when AI chat is enabled',
+      'Saying "Destro" now gets a 💥 reaction without an unsolicited text reply',
+      'AI chat keeps more recent group context for game conversations, especially Clash of Clans, and stays quiet unless someone addresses it',
+    ],
+  },
+  {
+    date: '2026-11-10',
+    notes: [
       'X alerts now check for posts every 30 seconds by default and send the post text before fetching media, so slow video or image downloads no longer delay the notification',
       'Antigroupstatus now detects WhatsApp group-status shares posted directly to a group, removes the share immediately and warns the member; enable it with /antigroupstatus on',
       'Admins can reply to a message with /del to remove it, or use /clear @user 10 to remove up to 50 recent messages from that one member',

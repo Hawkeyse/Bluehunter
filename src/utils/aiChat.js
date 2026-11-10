@@ -119,7 +119,7 @@ function looksLikeQuestion(text = '') {
 // NOT sent to OpenAI on every message - only bundled in as context on the
 // message that's actually about to get a reply (see buildHistoryBlock).
 const recentHistory = new Map(); // groupId -> [{ sender, text, ts }]
-const HISTORY_LIMIT = 15;
+const HISTORY_LIMIT = 30;
 
 function normalize(id = '') {
   return id.toString().split('@')[0].split(':')[0];

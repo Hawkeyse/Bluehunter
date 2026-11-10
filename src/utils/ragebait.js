@@ -2,6 +2,7 @@
 // trigger use OpenAI; ordinary messages stay on the normal message pipeline.
 const { OPENAI_API_KEY } = require('../config');
 const { getAiReply } = require('./openaiClient');
+const { isAddressingBot } = require('./aiChat');
 const logger = require('./logger');
 
 const SKULL = '💀';
@@ -9,6 +10,7 @@ const WTF_RE = /\b(?:wtf|wth|wdf|tf|tffff)\b/i;
 const WHO_RE = /^\s*who(?:\s+asked)?\s*[?.!]*\s*$/i;
 const HAPPENED_RE = /\bwhat(?:'s| is| has)?\s+happen(?:ed)?\b|\bwetin\s+(?:dey\s+)?happen\b/i;
 const BOT_RE = /\b(?:is|are)\s+(?:this|that|you|it)\s+(?:a\s+)?bot\b|\bbot\s+detected\b/i;
+const DESTRO_RE = /\bdestro\b/i;
 
 const PHRASE_BAITS = [
   {
@@ -27,11 +29,6 @@ const PHRASE_BAITS = [
     fallbacks: ['You win wetin? The argument wey you dey do with yourself?', 'The prize na the time you waste to type am.'],
   },
   {
-    type: 'apology',
-    re: /\bmy\s+bad\b/i,
-    fallbacks: ['"My bad" no be apology, na shrug.', 'Noted. Nothing change.'],
-  },
-  {
     type: 'says_who',
     re: /\bsays?\s+who\b/i,
     fallbacks: ['Me. I said it. It is settled.', 'The group, unanimously.'],
@@ -39,6 +36,7 @@ const PHRASE_BAITS = [
 ];
 
 const TRIGGERS = [
+  { type: 'destro', re: DESTRO_RE, react: true, reactText: '💥', reactOnly: true, fallbacks: [] },
   // WTF / TF get the skull reaction only, and not on every message: a text
   // answer to every "tf" turns the bot into a broken keyboard. reactOnly
   // skips the reply entirely, so no cooldown is burned either.
@@ -111,12 +109,13 @@ async function maybeRagebait({ sock, waMessage, chat, msg, senderId }) {
   const context = buildContext(groupId, text);
   rememberMessage(groupId, text);
   if (!trigger) return false;
+  if (!trigger.reactOnly && !isAddressingBot(waMessage, sock)) return false;
 
   if (trigger.react) {
     try {
-      await sock.sendMessage(groupId, { react: { text: SKULL, key: waMessage.key } });
+      await sock.sendMessage(groupId, { react: { text: trigger.reactText || SKULL, key: waMessage.key } });
     } catch (err) {
-      logger.warn('Ragebait skull reaction failed:', err.message);
+      logger.warn('Ragebait reaction failed:', err.message);
     }
   }
 

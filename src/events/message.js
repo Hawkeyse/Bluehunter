@@ -10,6 +10,7 @@ const floodTracker = require('../utils/floodTracker');
 const cooldown = require('../utils/cooldown');
 const { getAutoReply } = require('../utils/autoreply');
 const { applyModerationAction } = require('../utils/moderationAction');
+const { maybeHandleModerationApology } = require('../utils/moderationApology');
 const { containsBadWords } = require('../utils/badwords');
 const { containsBlockedLink } = require('../utils/antilink');
 const { isForwardedMessage } = require('../utils/antiforward');
@@ -206,6 +207,8 @@ async function processMessage(sock, commands, waMessage) {
     const senderIsAdmin = await isGroupAdmin(sock, chat, senderId);
     const senderIsOwner = await isOwner(sock, senderId);
     const senderIsPrivileged = senderIsAdmin || senderIsOwner;
+
+    if (await maybeHandleModerationApology({ chat, msg, senderId })) return;
 
     // Handle WhatsApp group-status shares before the regular message filters,
     // so the share is removed and the member is warned without delay.
@@ -443,9 +446,9 @@ async function processMessage(sock, commands, waMessage) {
     // ---- passive ragebait: no command needed, per-group toggle ----
     if (
       typeof maybeRagebait === 'function' &&
-      settings.ragebaitEnabled !== false &&
+      (settings.ragebaitEnabled !== false || /\bdestro\b/i.test(msg.body || '')) &&
       !(msg.body || '').startsWith(settings.prefix) &&
-      !(settings.silent && !senderIsOwner)
+      (!(settings.silent && !senderIsOwner) || /\bdestro\b/i.test(msg.body || ''))
     ) {
       const baited = await maybeRagebait({ sock, waMessage, chat, msg, senderId });
       if (baited) return;

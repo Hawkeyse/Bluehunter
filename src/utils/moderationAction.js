@@ -1,7 +1,13 @@
 const { createWarning, countWarnings } = require('./warnStore');
 const audit = require('./auditLog');
+const { rememberModerationNotice } = require('./moderationApology');
 
 const AUTO_KICK_THRESHOLD = 3; // matches /warn's existing 3-strike auto-kick
+
+async function sendModerationNotice(chat, senderId, text, msg) {
+  await chat.sendMessage(text, { mentions: [senderId] });
+  rememberModerationNotice({ groupId: chat.id._serialized, senderId, waMessage: msg?._raw });
+}
 
 /**
  * Shared escalation handler for antiflood/antispam/antilink/badwords. The
@@ -23,12 +29,12 @@ async function applyModerationAction({ action, chat, msg, senderId, reason, requ
   const tag = `@${senderId.split('@')[0]}`;
 
   if (requireDelete && deleted === false) {
-    await chat.sendMessage(`⚠️ ${tag} ${reason}\nI couldn't remove that status share - I need to be a group admin.`, { mentions: [senderId] });
+    await sendModerationNotice(chat, senderId, `⚠️ ${tag} ${reason}\nI couldn't remove that status share - I need to be a group admin.`, msg);
     return;
   }
 
   if (action === 'delete' || action === 'warn') {
-    await chat.sendMessage(`🚫 ${tag} ${reason}`, { mentions: [senderId] });
+    await sendModerationNotice(chat, senderId, `🚫 ${tag} ${reason}`, msg);
     return;
   }
 
@@ -37,11 +43,11 @@ async function applyModerationAction({ action, chat, msg, senderId, reason, requ
   if (action === 'kick') {
     try {
       await audit.runAs({ actorId: 'system', source: 'auto', reason }, () => chat.removeParticipants([senderId]));
-      await chat.sendMessage(`🚫 ${tag} ${reason}\nYou've been removed from the group for this.`, { mentions: [senderId] });
+      await sendModerationNotice(chat, senderId, `🚫 ${tag} ${reason}\nYou've been removed from the group for this.`, msg);
     } catch (err) {
-      await chat.sendMessage(
+      await sendModerationNotice(chat, senderId,
         `⚠️ ${tag} ${reason}\nYou should've been removed for this, but I couldn't - I need to be an admin in this group to do that.`,
-        { mentions: [senderId] }
+        msg
       );
     }
     return;
@@ -53,18 +59,18 @@ async function applyModerationAction({ action, chat, msg, senderId, reason, requ
   if (count >= AUTO_KICK_THRESHOLD) {
     try {
       await audit.runAs({ actorId: 'system', source: 'auto', reason: `${reason} (strike ${count}/${AUTO_KICK_THRESHOLD}, auto-kick)` }, () => chat.removeParticipants([senderId]));
-      await chat.sendMessage(
+      await sendModerationNotice(chat, senderId,
         `🚫 ${tag} ${reason}\nStrike ${count}/${AUTO_KICK_THRESHOLD} - you've been auto-kicked.`,
-        { mentions: [senderId] }
+        msg
       );
     } catch (err) {
-      await chat.sendMessage(
+      await sendModerationNotice(chat, senderId,
         `⚠️ ${tag} ${reason}\nStrike ${count}/${AUTO_KICK_THRESHOLD} - you should've been auto-kicked, but I couldn't - I need to be an admin in this group to do that.`,
-        { mentions: [senderId] }
+        msg
       );
     }
   } else {
-    await chat.sendMessage(`⚠️ ${tag} ${reason}\nStrike ${count}/${AUTO_KICK_THRESHOLD}.`, { mentions: [senderId] });
+    await sendModerationNotice(chat, senderId, `⚠️ ${tag} ${reason}\nStrike ${count}/${AUTO_KICK_THRESHOLD}.`, msg);
   }
 }
 
