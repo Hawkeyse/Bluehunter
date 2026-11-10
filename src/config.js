@@ -116,10 +116,9 @@ module.exports = {
   RAPIDAPI_INSTAGRAM_HOST: process.env.RAPIDAPI_INSTAGRAM_HOST || 'instagram-downloader-download-instagram-stories-videos4.p.rapidapi.com',
   RAPIDAPI_TWITTER_HOST: process.env.RAPIDAPI_TWITTER_HOST || 'twitter-api45.p.rapidapi.com',
   RAPIDAPI_SPOTIFY_HOST: process.env.RAPIDAPI_SPOTIFY_HOST || 'spotify-downloader9.p.rapidapi.com',
-  RAPIDAPI_YOUTUBE_HOST: process.env.RAPIDAPI_YOUTUBE_HOST || 'youtube138.p.rapidapi.com',
-  // /ytmp3 and /ytmp4 now run on the dedicated converter APIs below instead
-  // of youtube138's /video/streams (which the line above is kept around for,
-  // in case anything else still points at it).
+  RAPIDAPI_YOUTUBE_HOST: process.env.RAPIDAPI_YOUTUBE_HOST || 'yt-api.p.rapidapi.com',
+  // YouTube alert media uses YT-API /dl; /ytmp3 and /ytmp4 use dedicated
+  // converter APIs below.
   RAPIDAPI_YOUTUBE_MP3_HOST: process.env.RAPIDAPI_YOUTUBE_MP3_HOST || 'youtube-mp36.p.rapidapi.com',
   RAPIDAPI_YOUTUBE_MP4_HOST: process.env.RAPIDAPI_YOUTUBE_MP4_HOST || 'youtube-mp41.p.rapidapi.com',
   SOCIAL_DOWNLOAD_MAX_FILE_SIZE_MB: parseInt(process.env.SOCIAL_DOWNLOAD_MAX_FILE_SIZE_MB || '90', 10),

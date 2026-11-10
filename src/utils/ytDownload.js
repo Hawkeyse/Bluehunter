@@ -18,14 +18,9 @@ function extractVideoId(url) {
 
 /**
  * Fetches full video data (title, duration, direct CDN format URLs) for ONE
- * video via RapidAPI's youtube138 /video/streams endpoint. This returns an
- * Invidious-style shape (`formats` = muxed video+audio, `adaptiveFormats` =
- * separate audio-only/video-only tracks, `lengthSeconds`), which is exactly
- * what pickAudioFormat/pickMuxedVideoFormat below already expect.
- *
- * NOTE: not confirmed against a live call from this dev sandbox (RapidAPI
- * hosts aren't reachable here) - if the real response uses different field
- * names, tell me and I'll adjust.
+ * video via RapidAPI's YT-API /dl endpoint. Its response includes `status`,
+ * `formats` (muxed video+audio), `adaptiveFormats` (separate tracks), and
+ * `lengthSeconds`, matching the fields consumed by the format selectors below.
  */
 async function fetchVideoData(url) {
   if (!isSingleVideoUrl(url)) {
@@ -37,8 +32,9 @@ async function fetchVideoData(url) {
     throw new Error("Couldn't read a video ID out of that link.");
   }
 
-  const data = await rapidGet(RAPIDAPI_YOUTUBE_HOST, '/video/streams', { id: videoId });
-  if (!data || (!data.formats && !data.adaptiveFormats)) {
+  const data = await rapidGet(RAPIDAPI_YOUTUBE_HOST, '/dl', { id: videoId });
+  if (!data || (data.status && data.status !== 'OK')
+    || (!Array.isArray(data.formats) && !Array.isArray(data.adaptiveFormats))) {
     throw new Error('Video not found, private, age-restricted, or unavailable.');
   }
   return data;
