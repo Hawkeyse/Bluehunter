@@ -57,6 +57,25 @@ test('Destro gets a reaction-only explosion, even when normal ragebait is disabl
   ]]);
 });
 
+test('Timtech gets a reaction-only goat', async () => {
+  assert.equal(classifyTrigger('Timtech 🐐').type, 'timtech');
+  const sent = [];
+  const waMessage = { key: { id: 'timtech-1' } };
+  const handled = await maybeRagebait({
+    sock: { async sendMessage(...args) { sent.push(args); } },
+    waMessage,
+    chat: { isGroup: true, id: { _serialized: 'timtech-test@g.us' } },
+    msg: { body: 'Timtech 🐐' },
+    senderId: 'player@s.whatsapp.net',
+  });
+
+  assert.equal(handled, true);
+  assert.deepEqual(sent, [[
+    'timtech-test@g.us',
+    { react: { text: '🐐', key: waMessage.key } },
+  ]]);
+});
+
 test('passive ragebait does not reply to ordinary group chatter', async () => {
   const sent = [];
   const handled = await maybeRagebait({

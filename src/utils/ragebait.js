@@ -11,6 +11,7 @@ const WHO_RE = /^\s*who(?:\s+asked)?\s*[?.!]*\s*$/i;
 const HAPPENED_RE = /\bwhat(?:'s| is| has)?\s+happen(?:ed)?\b|\bwetin\s+(?:dey\s+)?happen\b/i;
 const BOT_RE = /\b(?:is|are)\s+(?:this|that|you|it)\s+(?:a\s+)?bot\b|\bbot\s+detected\b/i;
 const DESTRO_RE = /\bdestro\b/i;
+const TIMTECH_RE = /\btimtech\b/i;
 
 const PHRASE_BAITS = [
   {
@@ -37,6 +38,7 @@ const PHRASE_BAITS = [
 
 const TRIGGERS = [
   { type: 'destro', re: DESTRO_RE, react: true, reactText: '💥', reactOnly: true, fallbacks: [] },
+  { type: 'timtech', re: TIMTECH_RE, react: true, reactText: '🐐', reactOnly: true, fallbacks: [] },
   // WTF / TF get the skull reaction only, and not on every message: a text
   // answer to every "tf" turns the bot into a broken keyboard. reactOnly
   // skips the reply entirely, so no cooldown is burned either.

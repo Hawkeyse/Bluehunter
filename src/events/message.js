@@ -446,9 +446,9 @@ async function processMessage(sock, commands, waMessage) {
     // ---- passive ragebait: no command needed, per-group toggle ----
     if (
       typeof maybeRagebait === 'function' &&
-      (settings.ragebaitEnabled !== false || /\bdestro\b/i.test(msg.body || '')) &&
+      (settings.ragebaitEnabled !== false || /\b(?:destro|timtech)\b/i.test(msg.body || '')) &&
       !(msg.body || '').startsWith(settings.prefix) &&
-      (!(settings.silent && !senderIsOwner) || /\bdestro\b/i.test(msg.body || ''))
+      (!(settings.silent && !senderIsOwner) || /\b(?:destro|timtech)\b/i.test(msg.body || ''))
     ) {
       const baited = await maybeRagebait({ sock, waMessage, chat, msg, senderId });
       if (baited) return;

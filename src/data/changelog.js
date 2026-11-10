@@ -5,7 +5,7 @@ const CHANGELOG = [
     date: '2026-11-10',
     notes: [
       'After BlueHunter moderates a member, a short "sorry" or "my bad" gets a calm, direct acknowledgment even when AI chat is enabled',
-      'Saying "Destro" now gets a 💥 reaction without an unsolicited text reply',
+      'Saying "Destro" gets a 💥 reaction and mentioning Timtech gets a 🐐 reaction, with no unsolicited text reply',
       'AI chat keeps more recent group context for game conversations, especially Clash of Clans, and stays quiet unless someone addresses it',
     ],
   },
