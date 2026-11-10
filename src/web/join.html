@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BlueHunter - WhatsApp group bot</title>
+<meta name="description" content="BlueHunter keeps your WhatsApp group clean, active and fun. Add it to your group or set up your group in minutes.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060b12;--panel:#0f1c29;--panel2:#132434;--ink:#eef4fa;--mute:#8ea3b8;--line:#1c2f3f;--blue:#3b9bde;--blue2:#1a5f8f;--ok:#2ed195;--warn:#e6ac3f;--bad:#f05a4b}
+*{box-sizing:border-box}
+html{background:var(--bg);scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font:400 17px/1.6 'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;background:radial-gradient(900px 480px at 85% -8%,#123a5c 0,transparent 70%),var(--bg);padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+:focus-visible{outline:3px solid #7fb4d6;outline-offset:3px}
+a{color:var(--blue)}
+button,input{font:inherit;color:inherit}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:20px 0}
+.brand{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.15rem;letter-spacing:-.01em;text-decoration:none;color:var(--ink)}
+.brand img{width:36px;height:36px;border-radius:10px;box-shadow:0 0 0 1px #ffffff22,0 0 20px -2px #3b9bde99}
+.pill{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--line);background:#0b1620;border-radius:999px;padding:7px 15px;font-size:.9rem;color:var(--mute)}
+.dot{width:9px;height:9px;border-radius:50%;background:#5b6f82;position:relative}
+.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
+.dot.ok::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid var(--ok);animation:ping 2.4s ease-out infinite}
+@keyframes ping{from{transform:scale(1);opacity:.8}to{transform:scale(3);opacity:0}}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:44px 0 56px}
+h1{font-size:clamp(2.3rem,6.4vw,4.1rem);font-weight:800;line-height:1.02;letter-spacing:-.03em;margin:0 0 18px}
+.lead{font-size:1.15rem;color:var(--mute);max-width:36ch;margin:0 0 28px}
+.go{display:inline-flex;align-items:center;gap:10px;background:var(--blue);color:#04121c;font-weight:700;text-decoration:none;border-radius:12px;padding:14px 24px;transition:transform .15s,background .15s}
+.go:hover{background:#5ab0ec;transform:translateY(-2px)}
+
+/* animated chat: the one moment on this page */
+.chat{background:#0a141d;border:1px solid var(--line);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 30px 60px -30px #000}
+.chat header{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--line);color:var(--mute);font-size:.88rem}
+.chat header b{color:var(--ink)}
+.msg{max-width:86%;border-radius:14px;padding:9px 13px;font-size:.93rem;line-height:1.45;opacity:0;transform:translateY(8px) scale(.98);animation:pop .4s ease forwards}
+.msg small{display:block;font-size:.76rem;margin-bottom:2px;font-weight:600}
+.msg.them{background:#16252f;align-self:flex-start}.msg.them small{color:#f0b66b}
+.msg.bot{background:#123a5c;align-self:flex-end}.msg.bot small{color:#8cc9f2}
+.msg.sys{align-self:center;background:none;color:var(--mute);font-size:.82rem;padding:2px}
+@keyframes pop{to{opacity:1;transform:none}}
+.msg:nth-of-type(1){animation-delay:.5s}.msg:nth-of-type(2){animation-delay:1.5s}.msg:nth-of-type(3){animation-delay:2.7s}
+.msg:nth-of-type(4){animation-delay:3.7s}.msg:nth-of-type(5){animation-delay:5s}.msg:nth-of-type(6){animation-delay:6s}
+
+/* what we do */
+section{padding:40px 0}
+h2{font-size:clamp(1.6rem,4vw,2.3rem);font-weight:800;letter-spacing:-.02em;line-height:1.1;margin:0 0 10px}
+.sub{color:var(--mute);margin:0 0 30px;max-width:52ch}
+.does{border-top:1px solid var(--line)}
+.does .r{display:grid;grid-template-columns:minmax(150px,.32fr) 1fr;gap:10px 36px;padding:22px 0;border-bottom:1px solid var(--line)}
+.does h3{margin:0;font-size:1.12rem;font-weight:600;display:flex;gap:10px;align-items:baseline}
+.does h3 span{font-size:1.3rem}
+.does p{margin:0 0 10px;color:#c5d3e0}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chips i{font-style:normal;font-size:.82rem;color:var(--mute);border:1px solid var(--line);border-radius:7px;padding:2px 9px}
+
+/* choice */
+.start{padding:48px 0 30px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:26px}
+.choice{text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:20px;padding:26px;cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:border-color .15s,background .15s,transform .15s}
+.choice:hover{border-color:var(--blue2);transform:translateY(-3px)}
+.choice[aria-expanded=true]{border-color:var(--blue);background:var(--panel2)}
+.choice .big{font-size:2rem;line-height:1}
+.choice b{font-size:1.35rem;font-weight:800;letter-spacing:-.01em}
+.choice span.d{color:var(--mute);font-size:.98rem}
+.choice .cta{margin-top:8px;color:var(--blue);font-weight:600}
+.panel{display:none;margin-top:18px;background:var(--panel2);border:1px solid var(--blue2);border-radius:20px;padding:26px;animation:pop .3s ease forwards;opacity:0}
+.panel.open{display:block}
+label{display:block;font-size:.92rem;color:var(--mute);margin-bottom:8px}
+input{width:100%;padding:15px 16px;border-radius:12px;border:1px solid var(--line);background:#0a141d;font-size:1rem;outline:none}
+input:focus{border-color:var(--blue)}
+.btn{margin-top:14px;width:100%;padding:15px;border:0;border-radius:12px;background:var(--blue);color:#04121c;font-weight:800;font-size:1.05rem;cursor:pointer;transition:background .15s}
+.btn:hover{background:#5ab0ec}.btn:disabled{opacity:.55;cursor:progress}
+.help{color:var(--mute);font-size:.9rem;margin:14px 0 0}
+.note{margin-top:16px;padding:14px 16px;border-radius:12px;font-size:.97rem;display:none}
+.note.show{display:block}
+.note.load{background:#101f2d;border:1px solid var(--line);align-items:center;gap:10px}.note.load.show{display:flex}
+.note.ok{background:#0e2a22;border:1px solid #1d6a4d;color:#b6f4d8}
+.note.warn{background:#2b2110;border:1px solid #7a5a1d;color:#ffe2a8}
+.note.load{flex-direction:column;align-items:stretch;gap:10px}
+.note.load .row{display:flex;align-items:center;gap:12px}
+.note.load .msgs{display:grid;gap:2px;min-width:0}
+.note.load .msgs b{font-weight:800;color:var(--ink);overflow-wrap:anywhere;animation:pop .35s ease forwards;opacity:0}
+.note.load .msgs small{color:var(--mute);font-size:.86rem}
+.bar{height:5px;border-radius:99px;background:#1a2c3b;overflow:hidden}
+.bar i{display:block;height:100%;width:38%;border-radius:99px;background:linear-gradient(90deg,var(--blue2),var(--blue),#7fd0ff);animation:slide 1.3s ease-in-out infinite}
+@keyframes slide{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
+.btn.busy{position:relative;overflow:hidden}
+.btn.busy::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,#ffffff40 50%,transparent 70%);animation:shine 1.2s linear infinite}
+@keyframes shine{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.note.err{background:#2e1517;border:1px solid #7a2c33;color:#ffc9cd}
+.spin{width:16px;height:16px;border:2px solid #34506a;border-top-color:var(--blue);border-radius:50%;animation:s .8s linear infinite;flex:none}
+@keyframes s{to{transform:rotate(360deg)}}
+.steps{margin:0 0 6px;padding:0;list-style:none;display:grid;gap:12px}
+.steps li{display:flex;gap:14px;align-items:flex-start}
+.steps em{flex:none;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#04121c;font-style:normal;font-weight:800;display:flex;align-items:center;justify-content:center}
+code{background:#0a141d;border:1px solid var(--line);border-radius:5px;padding:1px 7px;color:var(--blue)}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.3rem;letter-spacing:.2em;text-transform:uppercase;text-align:center}
+
+footer{border-top:1px solid var(--line);margin-top:40px;padding:26px 0 40px;color:var(--mute);font-size:.92rem;display:flex;gap:10px 26px;flex-wrap:wrap;justify-content:space-between}
+footer a{color:var(--mute)}footer a:hover{color:var(--ink)}
+
+@media (max-width:820px){
+  .hero{grid-template-columns:1fr;gap:30px;padding-top:24px}
+  .does .r{grid-template-columns:1fr}
+  .choices{grid-template-columns:1fr}
+}
+.maint{background:#2b2110;border:1px solid #7a5a1d;color:#ffe2a8;border-radius:12px;padding:12px 16px;margin:14px 0 0;display:flex;gap:10px;align-items:flex-start;overflow-wrap:anywhere}
+.maint[hidden]{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="maint" id="maint" role="status" hidden><span aria-hidden="true">🛠️</span><span id="maintText"></span></div>
+  <div class="top">
+    <a class="brand" href="/"><img id="logo" alt="" width="36" height="36">BlueHunter</a>
+    <span class="pill"><span class="dot" id="dot"></span><span id="st">Checking status...</span></span>
+  </div>
+
+  <div class="hero">
+    <div>
+      <h1>Welcome to BlueHunter WhatsApp bot!</h1>
+      <p class="lead">It keeps your group clean, shows who's active, and adds a little fun. You can have it running in under a minute.</p>
+      <a class="go" href="#start">Get started</a>
+    </div>
+    <div class="chat" aria-label="Example of BlueHunter in a group chat">
+      <header><b>Study Squad</b> group chat</header>
+      <div class="msg them"><small>Tolu</small>free followers here chat.whatsapp.com/...</div>
+      <div class="msg bot"><small>BlueHunter</small>Link removed. Tolu now has 1 warning.</div>
+      <div class="msg sys">Ada joined</div>
+      <div class="msg bot"><small>BlueHunter</small>Welcome Ada to Study Squad! Send /help to see what I can do.</div>
+      <div class="msg them"><small>Ada</small>thanks!</div>
+      <div class="msg bot"><small>BlueHunter</small>Good evening, everyone.</div>
+    </div>
+  </div>
+
+  <section id="does">
+    <h2>What BlueHunter does for your group</h2>
+    <p class="sub">Everything below is controlled by your group's admins. Turn each feature on or off from the dashboard.</p>
+    <div class="does">
+      <div class="r"><h3><span>🛡️</span>Keeps it clean</h3><div>
+        <p>Removes links, spam, flooding and forwarded messages, and locks the group if a raid starts. You choose what happens to rule-breakers: delete, warn, strike or kick.</p>
+        <div class="chips"><i>Block links</i><i>Block spam</i><i>Block flooding</i><i>Raid lockdown</i><i>Bad word filter</i><i>AI moderation</i></div></div></div>
+      <div class="r"><h3><span>📈</span>Shows who's active</h3><div>
+        <p>A live graph of your group's messages, a top-members board, and a list of quiet members you can remove in one go.</p>
+        <div class="chips"><i>Live activity graph</i><i>Top chatters</i><i>Inactive members</i></div></div></div>
+      <div class="r"><h3><span>🗑️</span>Catches deleted messages</h3><div>
+        <p>When someone deletes a message for everyone, admins can still see what it said and who sent it.</p>
+        <div class="chips"><i>Deleted message log</i><i>Reveal view-once media</i></div></div></div>
+      <div class="r"><h3><span>👋</span>Runs on a schedule</h3><div>
+        <p>Welcomes new members, says goodbye, posts good morning to good night messages, and closes and opens the chat at times you pick.</p>
+        <div class="chips"><i>Welcome and goodbye</i><i>Auto close and open</i><i>Daily Bible verse</i><i>Daily joke</i></div></div></div>
+      <div class="r"><h3><span>🤖</span>Chats and plays</h3><div>
+        <p>Replies when mentioned, and brings word games to the group.</p>
+        <div class="chips"><i>AI chat</i><i>Word chain</i><i>Unscramble</i><i>Jokes</i></div></div></div>
+      <div class="r"><h3><span>🧰</span>Handy tools</h3><div>
+        <p>Download from YouTube, Instagram, X and Spotify, transcribe voice notes, set reminders and mark yourself away.</p>
+        <div class="chips"><i>Downloaders</i><i>Transcribe</i><i>Reminders</i><i>AFK</i></div></div></div>
+    </div>
+  </section>
+
+  <section class="start" id="start">
+    <h2>Looking for BlueHunter to join your group, or settings for your group? Let's do it. It's easy.</h2>
+    <p class="sub">Pick one.</p>
+    <div class="choices">
+      <button class="choice" id="c1" aria-expanded="false" aria-controls="p1">
+        <span class="big">➕</span><b>Add BlueHunter to my group</b>
+        <span class="d">Paste your group's invite link and the bot joins.</span><span class="cta">Add it now</span>
+      </button>
+      <button class="choice" id="c2" aria-expanded="false" aria-controls="p2">
+        <span class="big">⚙️</span><b>Set up my group</b>
+        <span class="d">Change settings and see your activity graph. You must be an admin.</span><span class="cta">Open settings</span>
+      </button>
+    </div>
+
+    <div class="panel" id="p1">
+      <form id="f">
+        <label for="l">WhatsApp group invite link</label>
+        <input id="l" type="url" inputmode="url" placeholder="https://chat.whatsapp.com/AbCdEfGhIjKlMnOpQrStUv" autocomplete="off" required>
+        <button class="btn" id="b" type="submit">Add BlueHunter to my group</button>
+      </form>
+      <p class="help">Get the link in WhatsApp: open your group, tap the group name, then Invite via link, then Copy link.</p>
+      <div class="note load" id="nload" role="status" aria-live="polite"><div class="row"><span class="spin"></span><div class="msgs"><b id="nloadT">Receiving your link...</b><small id="nloadS">Hang tight, this only takes a moment.</small></div></div><div class="bar"><i></i></div></div>
+      <div class="note warn" id="nwarn" role="status"></div>
+      <div class="note ok" id="nok" role="status"></div>
+      <div class="note err" id="nerr" role="alert"></div>
+    </div>
+
+    <div class="panel" id="p2">
+      <ol class="steps">
+        <li><em>1</em><span>In any group that has BlueHunter, send <code>/verify</code>. You don't need to be admin there.</span></li>
+        <li><em>2</em><span>BlueHunter sends a one-time code to your private chat.</span></li>
+        <li><em>3</em><span>Enter the code here. You'll see every group where you're an admin.</span></li>
+      </ol>
+      <form id="g">
+        <label for="code">Your code</label>
+        <input id="code" class="code" type="text" placeholder="XXXX-XXXX" maxlength="9" autocomplete="off" required>
+        <button class="btn" id="gb" type="submit">Open my dashboard</button>
+      </form>
+      <div class="note load" id="gload" role="status" aria-live="polite"><div class="row"><span class="spin"></span><div class="msgs"><b id="gloadT">Verifying your code...</b><small id="gloadS">Checking it with BlueHunter, please don't click again.</small></div></div><div class="bar"><i></i></div></div>
+      <div class="note ok" id="gok" role="status"></div>
+      <div class="note err" id="gerr" role="alert"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Want to talk to the owner? Contact <a id="wa" href="https://wa.me/233504919423" target="_blank" rel="noopener">Timtech on WhatsApp, +233 50 491 9423</a></span>
+    <span><a href="/dashboard#/changelog">What's new</a> &middot; <a href="/dashboard">Admin dashboard</a></span>
+  </footer>
+</div>
+
+<script>
+const $=(i)=>document.getElementById(i);
+const esc=(s)=>String(s).replace(/[&<>"]/g,(c)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const STATE={smooth:['ok','Online and running smoothly'],slow:['warn','Online, a little slow'],offline:['bad','Offline, reconnecting'],banned:['bad','Temporarily down']};
+
+async function stat(){
+  try{
+    const d=await(await fetch('/api/status')).json();
+    const [c,t]=STATE[d.health]||['ok','Online'];
+    $('dot').className='dot '+c;$('st').textContent=t;
+    const mt=d.maintenance&&d.maintenance.message;$('maint').hidden=!mt;if(mt)$('maintText').textContent=mt;
+  }catch(e){$('dot').className='dot bad';$('st').textContent='Status unavailable';}
+}
+stat();setInterval(stat,30000);
+
+// the two big buttons: one panel open at a time
+function pick(on){
+  [['c1','p1'],['c2','p2']].forEach(([c,p])=>{
+    const open=c===on&&$(c).getAttribute('aria-expanded')!=='true';
+    $(c).setAttribute('aria-expanded',open);$(p).classList.toggle('open',open);
+    if(open){setTimeout(()=>{$(p).scrollIntoView({behavior:'smooth',block:'nearest'});$(p===('p1')?'l':'code').focus({preventScroll:true});},60);}
+  });
+}
+$('c1').onclick=()=>pick('c1');$('c2').onclick=()=>pick('c2');
+
+// add the bot
+const sleep=(ms)=>new Promise((r)=>setTimeout(r,ms));
+const show=(el,html)=>{for(const x of ['nload','nok','nerr','nwarn']){$(x).classList.remove('show');}if(el){if(html)el.innerHTML=html;el.classList.add('show');}};
+const stage=(t,s)=>{$('nloadT').textContent=t;$('nloadT').style.animation='none';void $('nloadT').offsetWidth;$('nloadT').style.animation='';if(s)$('nloadS').textContent=s;};
+const postJson=async(url,data)=>{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const d=await r.json().catch(()=>({}));return {r,d};};
+let joining=false;
+$('f').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  if(joining)return; // ignore impatient double clicks
+  const link=$('l').value.trim();
+  if(!link)return show($('nerr'),'Paste the group invite link first.');
+  joining=true;$('b').disabled=true;$('l').readOnly=true;$('b').classList.add('busy');$('b').textContent='Please wait...';
+  show($('nload'));stage('Receiving your link...','Hang tight, this only takes a moment.');
+  let name=null;
+  try{
+    await sleep(900);
+    // step 1: find out which group this is
+    const info=await postJson('/api/bot-join-info',{link});
+    if(!info.r.ok||!info.d.ok){show($('nerr'),esc(info.d.error||'That invite link did not work.'));return;}
+    name=info.d.groupName;
+    const nm=name?esc(name):'your group';
+    stage(name?'About to join '+name+'...':'About to join your group...','Please do not close this page or click again.');
+    await sleep(1300);
+    // step 2: the real join
+    stage('Knocking on '+(name||'the group')+"'s door...",'Almost there...');
+    const {r,d}=await postJson('/api/bot-join',{link});
+    const gn=d.groupName?'<b>'+esc(d.groupName)+'</b>':nm;
+    if(r.ok&&d.ok&&d.requested){
+      show($('nwarn'),'📨 I\'ve requested to join '+gn+'. Please accept <b>BlueHunter</b> in your group\'s join requests, then send <code>/help</code> there.');
+    }else if(r.ok&&d.ok){
+      show($('nok'),d.alreadyIn?'👋 BlueHunter is already in '+gn+'. Send <code>/help</code> there to see what it can do.':'✅ BlueHunter has joined '+gn+'! Send <code>/help</code> in the group to get started, then use "Set up my group" to adjust settings.');
+      $('l').value='';
+    }else if(d.declined){
+      show($('nerr'),'❌ BlueHunter was declined from '+gn+'. '+esc(d.error||'')+' Ask an admin to accept it, or try again.');
+    }else show($('nerr'),esc(d.error||'Something went wrong. Try again.'));
+  }catch(err){show($('nerr'),'Could not reach BlueHunter. Check your connection and try again.');}
+  finally{joining=false;$('b').disabled=false;$('l').readOnly=false;$('b').classList.remove('busy');$('b').textContent='Add BlueHunter to my group';}
+});
+
+// sign in with the /verify code, then go straight to the dashboard
+let verifying=false;
+$('g').addEventListener('submit',async(e)=>{
+  e.preventDefault();
+  if(verifying)return; // second click while it is working does nothing
+  const code=$('code').value.trim();
+  for(const x of ['gerr','gok','gload'])$(x).classList.remove('show');
+  if(!code){$('gerr').textContent='Enter your code first.';$('gerr').classList.add('show');return;}
+  verifying=true;$('gb').disabled=true;$('code').readOnly=true;$('gb').classList.add('busy');$('gb').textContent='Verifying...';
+  $('gload').classList.add('show');
+  const slow=setTimeout(()=>{$('gloadT').textContent='Still checking...';$('gloadS').textContent='Almost there. Please wait, do not click again.';},3500);
+  let ok=false;
+  try{
+    const {r,d}=await postJson('/api/login',{code});
+    if(r.ok&&d.ok){
+      ok=true;clearTimeout(slow);
+      $('gload').classList.remove('show');
+      $('gok').innerHTML='✅ <b>Code verified!</b> Please wait, taking you to your dashboard. Don\'t click anything else.';
+      $('gok').classList.add('show');
+      $('gb').textContent='Opening your dashboard...';
+      setTimeout(()=>{location.href='/dashboard';},900);
+      return; // stay locked until the page changes
+    }
+    $('gload').classList.remove('show');
+    $('gerr').textContent=d.error||'That code did not work. Send /verify again for a new one.';$('gerr').classList.add('show');
+  }catch(err){$('gload').classList.remove('show');$('gerr').textContent='Could not reach BlueHunter. Try again.';$('gerr').classList.add('show');}
+  finally{clearTimeout(slow);if(!ok){verifying=false;$('gb').disabled=false;$('code').readOnly=false;$('gb').classList.remove('busy');$('gb').textContent='Open my dashboard';}}
+});
+
+// reuse the same logo as the dashboard without duplicating it in this file
+fetch('/dashboard').then((r)=>r.text()).then((t)=>{const m=t.match(/const LOGO = '([^']+)'/);if(m){$('logo').src=m[1];const l=document.createElement('link');l.rel='icon';l.href=m[1];document.head.appendChild(l);}}).catch(()=>{});
+</script>
+</body>
+</html>
