@@ -1,21 +1,53 @@
 const YoutubeWatch = require('../../models/YoutubeWatch');
 const { resolveChannelId, fetchLatestVideos, describePostingFrequency, fetchChannelStats } = require('../../utils/youtubeRss');
+const { RAPIDAPI_KEY, YT_MAX_DURATION_MINUTES, YT_MAX_FILE_SIZE_MB } = require('../../config');
 
 module.exports = {
   name: 'ytalert',
   aliases: ['youtubealert'],
   category: 'youtube',
-  description: '/ytalert add|remove|list <channel> - post an alert here whenever a YouTube channel uploads',
+  description: '/ytalert add|remove|list|media <channel> - manage YouTube upload alerts and authorized MP4 reposts',
   adminOnly: true,
   groupOnly: true,
   async execute({ msg, chat, args, senderId }) {
     const sub = (args[0] || '').toLowerCase();
     const groupId = chat.id._serialized;
 
+    if (sub === 'media') {
+      const state = (args[1] || '').toLowerCase();
+      const target = args.slice(2).join(' ').trim();
+      if (!['on', 'off'].includes(state) || !target) {
+        return msg.reply(
+          'Usage: /ytalert media on|off <channel name or list number>\n' +
+          'Only turn video reposts on for channels you own or have permission to redistribute.'
+        );
+      }
+      if (state === 'on' && !RAPIDAPI_KEY) {
+        return msg.reply('⚠️ MP4 reposts need RAPIDAPI_KEY configured. RSS link alerts will keep working without it.');
+      }
+
+      const watches = await YoutubeWatch.find({ groupId });
+      const match = /^\d+$/.test(target)
+        ? watches[Number.parseInt(target, 10) - 1]
+        : watches.find((w) =>
+          w.channelId === target ||
+          (w.channelTitle || '').toLowerCase() === target.toLowerCase()
+        );
+      if (!match) return msg.reply(`Couldn't find a watched channel matching "${target}". Check /ytalert list.`);
+
+      match.includeVideo = state === 'on';
+      await match.save();
+      return msg.reply(
+        state === 'on'
+          ? `✅ MP4 reposts enabled for *${match.channelTitle || match.channelId}*. Only use this for a channel you own or have permission to redistribute. Clips over ${YT_MAX_DURATION_MINUTES} minutes or ${YT_MAX_FILE_SIZE_MB} MB will be link-only.`
+          : `✅ MP4 reposts disabled for *${match.channelTitle || match.channelId}*.`
+      );
+    }
+
     if (sub === 'list') {
       const watches = await YoutubeWatch.find({ groupId });
       if (!watches.length) return msg.reply('No YouTube channels are being watched in this group yet. Add one: /ytalert add <channel>');
-      const list = watches.map((w, i) => `${i + 1}. ${w.channelTitle || w.channelId}`).join('\n');
+      const list = watches.map((w, i) => `${i + 1}. ${w.channelTitle || w.channelId}${w.includeVideo ? ' · MP4 on' : ''}`).join('\n');
       return msg.reply(`📺 Watched channels in this group:\n${list}`);
     }
 
@@ -84,12 +116,13 @@ module.exports = {
           `${subscriberCount ? `👥 ${subscriberCount}\n` : ''}` +
           `${viewCount ? `👁️ ${viewCount} total\n` : ''}` +
           `${frequency ? `📅 Posts ${frequency}\n` : ''}` +
-          `\nI'll post here whenever they upload - starting from their NEXT new video, not their existing ones.`
+          `\nI'll post here whenever they upload - starting from their NEXT new video, not their existing ones.` +
+          `\nFor a channel you own or have permission to repost, enable MP4s with /ytalert media on ${resolved.channelTitle}.`
       );
     }
 
     return msg.reply(
-      'Usage:\n/ytalert add <channel URL, @handle, or channel ID>\n/ytalert remove <name or number>\n/ytalert list'
+      'Usage:\n/ytalert add <channel URL, @handle, or channel ID>\n/ytalert remove <name or number>\n/ytalert list\n/ytalert media on|off <name or number> (only for channels you own or may repost)'
     );
   },
 };

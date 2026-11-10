@@ -5,6 +5,9 @@ const youtubeWatchSchema = new mongoose.Schema(
     groupId: { type: String, required: true, index: true },
     channelId: { type: String, required: true },
     channelTitle: { type: String, default: '' },
+    // Repost video files only when an admin explicitly confirms this channel
+    // is owned by them or they have permission to redistribute its uploads.
+    includeVideo: { type: Boolean, default: false },
     // The most recent video the group has already been alerted about. null
     // on a freshly-added channel on purpose: the FIRST check after adding a
     // channel just records whatever's currently newest as the baseline,

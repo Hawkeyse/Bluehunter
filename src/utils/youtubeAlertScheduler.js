@@ -1,11 +1,68 @@
 const YoutubeWatch = require('../models/YoutubeWatch');
 const { fetchLatestVideos } = require('./youtubeRss');
-const { YOUTUBE_ALERT_CHECK_INTERVAL_MS } = require('../config');
+const { fetchVideoData, pickMuxedVideoFormat, downloadMediaBuffer } = require('./ytDownload');
+const { createLimiter } = require('./limiter');
+const {
+  YOUTUBE_ALERT_CHECK_INTERVAL_MS,
+  RAPIDAPI_KEY,
+  YT_MAX_DURATION_MINUTES,
+  YT_MAX_FILE_SIZE_MB,
+} = require('../config');
 const logger = require('./logger');
 
 function buildAlertMessage(watch, video) {
   const kind = video.isShort ? '🩳 New Short!' : '🔔 New Video!';
   return `${kind}\n🎥 ${video.title}\n📺 ${watch.channelTitle || watch.channelId}\n🔗 ${video.url}`;
+}
+
+const videoUploadLimiter = createLimiter({
+  concurrency: 2,
+  taskTimeoutMs: 5 * 60_000,
+  onError: (err) => logger.warn('YouTube alert video upload failed:', err.message),
+});
+
+async function attachYoutubeVideo(sock, watch, video) {
+  if (!watch.includeVideo || !RAPIDAPI_KEY) return;
+
+  const item = await fetchVideoData(video.url);
+  const durationSec = Number.parseInt(item.lengthSeconds || '0', 10);
+  if (durationSec > YT_MAX_DURATION_MINUTES * 60) {
+    logger.info(`YouTube alert video skipped for ${video.videoId}: over ${YT_MAX_DURATION_MINUTES} minute limit.`);
+    return;
+  }
+
+  const format = pickMuxedVideoFormat(item);
+  if (!format || !format.mimeType?.toLowerCase().startsWith('video/mp4')) {
+    logger.info(`YouTube alert video skipped for ${video.videoId}: no combined MP4 format is available.`);
+    return;
+  }
+
+  const maxBytes = YT_MAX_FILE_SIZE_MB * 1024 * 1024;
+  const declaredBytes = Number.parseInt(format.contentLength || '0', 10);
+  if (declaredBytes > maxBytes) {
+    logger.info(`YouTube alert video skipped for ${video.videoId}: over ${YT_MAX_FILE_SIZE_MB} MB limit.`);
+    return;
+  }
+
+  const buffer = await downloadMediaBuffer(format.url, { maxBytes });
+  const safeTitle = video.title.replace(/[\\/:*?"<>|]/g, '').slice(0, 60) || video.videoId;
+  await sock.sendMessage(watch.groupId, {
+    video: buffer,
+    mimetype: 'video/mp4',
+    fileName: `${safeTitle}.mp4`,
+    caption: `${video.title}\n${video.url}`,
+  });
+}
+
+async function sendYoutubeAlert(sock, watch, video) {
+  await sock.sendMessage(watch.groupId, { text: buildAlertMessage(watch, video) });
+  if (watch.includeVideo && RAPIDAPI_KEY) {
+    if (videoUploadLimiter.stats().queued >= 20) {
+      logger.warn('YouTube alert video skipped for', video.videoId, '- upload queue is full.');
+      return;
+    }
+    videoUploadLimiter.run(() => attachYoutubeVideo(sock, watch, video));
+  }
 }
 
 function startYoutubeAlertScheduler(sock) {
@@ -48,7 +105,7 @@ function startYoutubeAlertScheduler(sock) {
           const newVideos = alreadySeenIndex === -1 ? [latest] : videos.slice(0, alreadySeenIndex).reverse();
 
           for (const video of newVideos) {
-            await sock.sendMessage(watch.groupId, { text: buildAlertMessage(watch, video) });
+            await sendYoutubeAlert(sock, watch, video);
           }
 
           watch.lastVideoId = latest.videoId;
@@ -65,4 +122,4 @@ function startYoutubeAlertScheduler(sock) {
   }, YOUTUBE_ALERT_CHECK_INTERVAL_MS);
 }
 
-module.exports = { startYoutubeAlertScheduler };
+module.exports = { startYoutubeAlertScheduler, sendYoutubeAlert, attachYoutubeVideo };

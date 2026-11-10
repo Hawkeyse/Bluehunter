@@ -4,6 +4,12 @@ const CHANGELOG = [
   {
     date: '2026-11-10',
     notes: [
+      'YouTube alerts can attach a video as MP4 for a watched channel you own or have permission to repost: use /ytalert media on <channel>. Other channels keep link-only alerts; clips over 15 minutes or 90 MB stay link-only',
+    ],
+  },
+  {
+    date: '2026-11-10',
+    notes: [
       'After BlueHunter moderates a member, a short "sorry" or "my bad" gets a calm, direct acknowledgment even when AI chat is enabled',
       'Saying "Destro" gets a 💥 reaction and mentioning Timtech gets a 🐐 reaction, with no unsolicited text reply',
       'AI chat keeps more recent group context for game conversations, especially Clash of Clans, and stays quiet unless someone addresses it',
