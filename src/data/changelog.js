@@ -4,6 +4,7 @@ const CHANGELOG = [
   {
     date: '2026-11-10',
     notes: [
+      'Admins can run /clearstatus to remove recent group Status posts from non-admins while keeping admins’ posts; only posts delivered to BlueHunter since startup are available',
       'YouTube alerts can attach a video as MP4 for a watched channel you own or have permission to repost: use /ytalert media on <channel>. Other channels keep link-only alerts; clips over 15 minutes or 90 MB stay link-only',
       'YouTube MP4 alerts now use the YT-API /dl endpoint on RapidAPI',
     ],

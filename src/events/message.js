@@ -23,6 +23,7 @@ const { checkAndEnforceGroupSafety } = require('../utils/groupSafety');
 const { maybeHandleGameRound } = require('../utils/gameRounds');
 const { maybeHandleLobbyJoin } = require('../utils/gameLobby');
 const { trackIncomingMessage } = require('../utils/deletedLogs');
+const { trackGroupStatus } = require('../utils/groupStatusStore');
 const { isGroupStatusMention, unwrapMessage } = require('../utils/mediaContent');
 const crowdModeration = require('../utils/crowdModeration');
 const { maybeHandleNaturalCommand } = require('../utils/nlCommands');
@@ -93,6 +94,7 @@ module.exports = function registerMessageEvent(sock, commands) {
     // was deleted but the bot never saw it" cases that weren't actually old
     // messages from a previous session.
     for (const waMessage of messages) {
+      trackGroupStatus(waMessage);
       if (waMessage.key?.fromMe || !waMessage.message || waMessage.key?.remoteJid === 'status@broadcast') continue;
       trackIncomingMessage(waMessage).catch((err) => logger.warn('Failed to track incoming message for deleted-log:', err.message));
     }
