@@ -94,7 +94,7 @@ module.exports = function registerMessageEvent(sock, commands) {
     // was deleted but the bot never saw it" cases that weren't actually old
     // messages from a previous session.
     for (const waMessage of messages) {
-      trackGroupStatus(waMessage);
+      trackGroupStatus(waMessage).catch((err) => logger.warn('Failed to track group Status post:', err.message));
       if (waMessage.key?.fromMe || !waMessage.message || waMessage.key?.remoteJid === 'status@broadcast') continue;
       trackIncomingMessage(waMessage).catch((err) => logger.warn('Failed to track incoming message for deleted-log:', err.message));
     }

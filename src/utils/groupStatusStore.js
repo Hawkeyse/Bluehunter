@@ -1,61 +1,74 @@
+const GroupStatusPost = require('../models/GroupStatusPost');
+
 const STATUS_TTL_MS = 24 * 60 * 60 * 1000;
-const MAX_STATUSES_PER_GROUP = 500;
-const statusesByGroup = new Map();
-const { isGroupStatusMention } = require('./mediaContent');
 
-function isGroupStatusPost(waMessage) {
-  const groupId = waMessage?.key?.remoteJid;
-  if (!groupId || !groupId.endsWith('@g.us') || waMessage.key.fromMe) return false;
-  return isGroupStatusMention(waMessage);
-}
+function containsGroupStatusMessage(message) {
+  let current = message;
+  let guard = 0;
+  while (current && guard < 5) {
+    guard++;
+    if (current.groupStatusMessage) return true;
 
-function pruneGroup(groupStatuses, now = Date.now()) {
-  for (const [id, entry] of groupStatuses) {
-    if (now - entry.seenAt >= STATUS_TTL_MS) groupStatuses.delete(id);
+    const wrapper = current.ephemeralMessage
+      || current.viewOnceMessage
+      || current.viewOnceMessageV2
+      || current.viewOnceMessageV2Extension
+      || current.documentWithCaptionMessage
+      || current.editedMessage
+      || current.messageContextInfo
+      || current.groupMentionedMessage;
+    if (!wrapper?.message) break;
+    current = wrapper.message;
   }
+  return false;
 }
 
-function trackGroupStatus(waMessage) {
-  if (!isGroupStatusPost(waMessage) || !waMessage.key.id) return;
-
-  const groupId = waMessage.key.remoteJid;
-  let groupStatuses = statusesByGroup.get(groupId);
-  if (!groupStatuses) {
-    groupStatuses = new Map();
-    statusesByGroup.set(groupId, groupStatuses);
-  }
-  pruneGroup(groupStatuses);
-
-  const key = {
-    remoteJid: groupId,
-    id: waMessage.key.id,
-    participant: waMessage.key.participant,
-    fromMe: false,
-  };
-  groupStatuses.delete(key.id);
-  groupStatuses.set(key.id, {
-    key,
-    authorId: waMessage.key.participant || '',
-    seenAt: Date.now(),
-  });
-
-  while (groupStatuses.size > MAX_STATUSES_PER_GROUP) {
-    groupStatuses.delete(groupStatuses.keys().next().value);
-  }
+function getMessageDate(timestamp) {
+  if (!timestamp) return new Date();
+  const seconds = typeof timestamp.toNumber === 'function' ? timestamp.toNumber() : Number(timestamp);
+  return Number.isFinite(seconds) && seconds > 0 ? new Date(seconds * 1000) : new Date();
 }
 
-function getTrackedGroupStatuses(groupId) {
-  const groupStatuses = statusesByGroup.get(groupId);
-  if (!groupStatuses) return [];
-  pruneGroup(groupStatuses);
-  return [...groupStatuses.values()];
+function getAuthorId(key) {
+  return key.participant
+    || key.participantPn
+    || key.participantLid
+    || key.senderPn
+    || key.senderLid
+    || '';
 }
 
-function forgetTrackedGroupStatus(groupId, messageId) {
-  const groupStatuses = statusesByGroup.get(groupId);
-  if (!groupStatuses) return;
-  groupStatuses.delete(messageId);
-  if (!groupStatuses.size) statusesByGroup.delete(groupId);
+async function trackGroupStatus(waMessage) {
+  const key = waMessage?.key;
+  const groupId = key?.remoteJid;
+  if (!groupId?.endsWith('@g.us') || key.fromMe || !key.id || !containsGroupStatusMessage(waMessage.message)) return;
+
+  const seenAt = getMessageDate(waMessage.messageTimestamp);
+  const expiresAt = new Date(seenAt.getTime() + STATUS_TTL_MS);
+  if (expiresAt <= new Date()) return;
+
+  await GroupStatusPost.findOneAndUpdate(
+    { groupId, messageId: key.id },
+    {
+      $set: {
+        authorId: getAuthorId(key),
+        key: { ...key },
+        seenAt,
+        expiresAt,
+      },
+    },
+    { upsert: true, setDefaultsOnInsert: true }
+  );
+}
+
+async function getTrackedGroupStatuses(groupId) {
+  return GroupStatusPost.find({ groupId, expiresAt: { $gt: new Date() } })
+    .sort({ seenAt: 1 })
+    .lean();
+}
+
+async function forgetTrackedGroupStatus(groupId, messageId) {
+  return GroupStatusPost.deleteOne({ groupId, messageId });
 }
 
 module.exports = {
