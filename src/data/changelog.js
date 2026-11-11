@@ -2,6 +2,14 @@
 // Add a new block here whenever you ship something, then restart the bot.
 const CHANGELOG = [
   {
+    date: '2026-11-11',
+    notes: [
+      'BlueHunter Discover now has search and filters for emoji flairs, group size and weekly activity; admins can opt into public invites with /discoverable on, which visitors see only after accepting the WhatsApp and group-rules notice',
+      'Group directory flairs now include active, giveaway, roast and vawulence labels, and its top three cards have animated fire highlights',
+      'The public Group chats directory lists groups BlueHunter is currently in with their description, members, weekly activity and latest bump; anyone can /bump once per 24 hours, and group admins can set self-reported emoji flairs',
+    ],
+  },
+  {
     date: '2026-11-10',
     notes: [
       'Admins can run /clearstatus to remove tracked active group Status posts from non-admins while keeping current admins’ posts; records survive restarts, and WhatsApp must have delivered each post to BlueHunter',

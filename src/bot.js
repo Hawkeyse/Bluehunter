@@ -16,7 +16,7 @@ const { SESSION_PATH, BOT_NAME, SEND_GAP_MS, PAIRING_NUMBER, AUTO_RELINK } = req
 const logger = require('./utils/logger');
 const { peekGroupMetadata, invalidateGroupMetadata, groupMetadataCacheSize } = require('./utils/waCompat');
 const { startHealthMonitor } = require('./utils/health');
-const { startWebServer } = require('./web/server');
+const { startWebServer, invalidateGroupCaches } = require('./web/server');
 const { startMemorySweeper } = require('./utils/sweeper');
 const { trackIncomingMessage, handleDeleteEvent, handleMessageUpdates, startDeletedLogPruner } = require('./utils/deletedLogs');
 
@@ -260,6 +260,7 @@ async function start() {
   // admins or settings change, so drop that group's cached copy.
   sock.ev.on('group-participants.update', (update) => {
     if (update && update.id) invalidateGroupMetadata(update.id);
+    invalidateGroupCaches();
   });
   sock.ev.on('groups.update', (updates) => {
     for (const update of updates || []) {

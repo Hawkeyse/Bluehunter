@@ -114,6 +114,20 @@ const groupSettingsSchema = new mongoose.Schema(
     // group-wide activity tracking (distinct from per-user Activity model) -
     // used to detect and leave prolonged-inactive groups
     lastActivityAt: { type: Date, default: Date.now },
+    lastBumpedAt: { type: Date, default: null },
+    directoryDiscoverable: { type: Boolean, default: false },
+    directoryFlairs: {
+      type: [{
+        type: String,
+        enum: [
+          'Friendly', 'SFW', 'NSFW', 'Politics', 'Religion', 'Vawulence',
+          'Roast', 'Active', 'Giveaway', 'No underage', 'Bot', 'Gamer',
+          'Technology', 'Nigeria', 'Ghana', 'Kenya', 'South Africa',
+          'United Kingdom', 'United States',
+        ],
+      }],
+      default: [],
+    },
 
     // whether the one-time join intro (see utils/introMessage.js) has been
     // sent for this group yet. Deliberately a persisted flag rather than

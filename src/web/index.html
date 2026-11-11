@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>BlueHunter</title>
+<title>BlueHunter discoverable group chats</title>
 <link id="fav" rel="icon">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
@@ -406,6 +406,49 @@ input[type=number]{background:var(--panel);border:1px solid var(--line);border-r
 .rpc .rrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
 .rpc input[type=file]{max-width:100%}
 .rpc .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.directory-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0 18px}
+.directory-filters input,.directory-filters select{width:100%;min-width:0}
+.directory-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));align-items:stretch;gap:12px}
+.directory-pagination{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:20px}
+.directory-pagination button:disabled{opacity:.45;cursor:not-allowed}
+.directory-page-summary{color:var(--mute);font-size:.9rem;text-align:center}
+.directory-card{display:grid;grid-template-columns:48px minmax(0,1fr);align-content:start;align-items:start;gap:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px}
+.directory-card{cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s}
+.directory-card:hover,.directory-card:focus-visible{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 12px 30px -20px var(--blue)}
+.directory-card.top-1{border-color:#e6ac3f;background:linear-gradient(115deg,#3b2b1233,var(--panel) 48%);box-shadow:0 0 28px -20px #ffc44d}
+.directory-card.top-2{border-color:#9eafbf;background:linear-gradient(115deg,#a8bed222,var(--panel) 48%)}
+.directory-card.top-3{border-color:#cd7f5033;background:linear-gradient(115deg,#cd7f5022,var(--panel) 48%)}
+.directory-card h3{margin:0 0 6px;font-size:1.08rem}
+.directory-card p{color:var(--mute);margin:0 0 12px;white-space:pre-wrap;overflow-wrap:anywhere}
+.directory-card .meta{grid-column:1/-1;display:flex;gap:7px 12px;flex-wrap:wrap;color:var(--mute);font-size:.83rem}
+.directory-avatar{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#1d6596,#132434);border:1px solid #55b8ff55;color:#d9f1ff;font-size:1.15rem;font-weight:800;box-shadow:inset 0 1px 0 #ffffff20}
+.directory-main{min-width:0}
+.directory-main p{margin-bottom:8px;font-size:.9rem}
+.directory-open{grid-column:2;justify-self:start;white-space:nowrap;color:var(--blue);font-size:.82rem;font-weight:700}
+.directory-country{display:inline-flex;gap:3px;margin-left:5px;font-size:1rem;vertical-align:baseline}
+.directory-card .rank{color:var(--blue);font-weight:700}
+.rank-chip{display:inline-flex;align-items:center;gap:5px;margin-right:6px;border:1px solid var(--line);border-radius:999px;padding:3px 9px;font-size:.72rem;letter-spacing:.04em;vertical-align:middle}
+.top-1 .rank-chip{color:#ffd36c;border-color:#e6ac3f88;background:#e6ac3f18}
+.top-2 .rank-chip{color:#d8e4ef;border-color:#a8bed288;background:#a8bed218}
+.top-3 .rank-chip{color:#e8a77c;border-color:#cd7f5088;background:#cd7f5018}
+.rank-flame{display:inline-block;transform-origin:50% 85%;animation:directoryFire .75s ease-in-out infinite alternate}
+.rank-spark{display:inline-block;animation:directorySpark 1.3s ease-in-out infinite}
+@keyframes directoryFire{from{transform:translateY(1px) scale(.92) rotate(-5deg);filter:drop-shadow(0 0 2px #ff5a1f)}to{transform:translateY(-2px) scale(1.12) rotate(5deg);filter:drop-shadow(0 0 9px #ff9a24)}}
+@keyframes directorySpark{0%,100%{opacity:.35;transform:scale(.75)}50%{opacity:1;transform:scale(1.18)}}
+.directory-flairs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 12px}
+.directory-flair{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--ink);font-size:.78rem;background:#ffffff06}
+.directory-flair-icon{font-size:.95rem;line-height:1}
+.directory-dialog{width:min(620px,calc(100% - 28px));max-height:min(85vh,760px);overflow:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 24px 90px #000b}
+.directory-dialog::backdrop{background:#02070dcc;backdrop-filter:blur(7px)}
+.directory-dialog h2{margin:0 40px 10px 0}
+.directory-dialog p{color:var(--mute);white-space:pre-wrap;overflow-wrap:anywhere}
+.directory-dialog .dtop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.directory-dialog .dclose{border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--ink);padding:7px 11px;cursor:pointer}
+.directory-dialog .dflairs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.directory-dialog .consent{display:flex;gap:10px;align-items:flex-start;padding:14px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;color:var(--ink)}
+.directory-dialog .consent input{margin-top:5px}
+.directory-dialog .join-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+@media(max-width:600px){.directory-card{padding:14px}.directory-list{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -418,7 +461,8 @@ input[type=number]{background:var(--panel);border:1px solid var(--line);border-r
 <div id="toast" role="status"></div>
 <script>
 const LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAwFBMVEUfXdxaoOYmVqam3PYVLl0vjvpabJYpRmyctNZCeezW3ukWHy900P5LVmtiiLGLk6scMI0ALcEAAAYASu4CVfgBOM8BJIwAGXIHZvoFRdUDNq8CCC4AK6sDFlEAHYcNdfsBCk7S9/vv/f0EJHTF2PcGNpXS5fsHEzIPRrIvdfSx6fqK2PxRqPZuyPoAPeIqafQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUQKwzAAAAMHRSTlP///////////////////////////////////////////////////////////////9Ppz/1AAAFRElEQVR42q3YCZOjKhAAYPBIMvc+VBAQQzRGc5j5///uNXgkJpjZ2UrX1NZuVr90N4gwiGYQIqZalzzJ7D+Sq+A8msQ5jse/xzbSNF2v1yGyEOe5UqoykhA/QDdOD60tJABikijBkxsnuXHcUDpCKGGMEFkaKUkeZRTNQraySOSKEFLThic3MQ9Na+sgLnIJEFGUR7fSLyARc8GIjZJy/pcZxfEdlMTJABFa3UhzUOyA4Fahe0hWFYr+EYLKEiF7iNQg8dkend1QaiGoLMnIGEpUMZ/L6DKxHRAHqLxApJxI0U/QOI+E6a66gkh1Ld30yA2laYhsixJCppL5kDuhyAmFn8i2iE4h0oAUwePB/xJaY4XuWmQnQVOBxI3Efxj9LqGlRray+gYitc2J3z2ybij0ZAcJcheqqRqQohloOh2x0hpxR4usxG1OfwOFgdbKQJw5IBLwyiHdQ3HoEa0ZMi2SZF5yTaN44mBCNLOQIO4oQUon60/3M3HWuO4hd4t6SQxSd1+X0aRBOIALGUA8iRT5UYrdUAyNJiPEa/KjdIGmlYVLMkKcE/JQqtJ4BhocCyVRZZ4J/UCiaRq5oNHpMopL43iefCChtHMmUNj15wKZ4atOGAczUmCk9W1C5gEbL8nzHMXIPA8I47b9nBk+JQRt1hMIFrLr76UGasy7+gTO+7H13JK00qXn6X4/vdJAKcjaa9ujD4HfZjpFBa1syyPDIO9mxgwQC9v24G82H+bb65nyKLQ8tcks7y6x0BuR9PQOjHXMPU5KUsoaeFl4geO/Kc2RZ1qAj/6m+OxuWHwod9MZpZ7nHtoBalpIqHizny2Kol4u3D0P3mZmiAAIvkLy9rApVl2fg+1rHfizk2o6wwJ5gWpbGlT2JbtPa0nqg3+cnel9dvXSw9i7guw0ORlIq+Het83h+B4+SEqSZXs8tq3XP6IisxChe4BeSzY8uV8Ate+NdCUCCZPAX0j/cPRbPECigxQ3zf7UsLOVUOBHYaATu4VUsPis+wHRC5M1ZlOI0DWkVHgMNttaL4qNuci7XVmk9+53w6lWC/lR7I7HAWoE6yDJQ4Be/2itg5V1fJzfQ/5hGH8pl8XGPy70sOvoISguPIK0WKwK4xx8LO5mpUaHzbIfWilt/d4dBCMXm6ErjLM5+C/Z/UtTcn8YWujkqtgd8NDGio+QeSzRGuMVLAEYJdS19AoM1TMFitZfkNDBY+MqegXB9zAqYFOUZEw5ZyMsf8UrY2ZAvkzii3FcSzGBuuLl/JRmKd68BpotXqEDvjfOO6jmDnocjK/x6hPa42OPXs2zX0OwKglY3hC8DpierMW/hUztGqbtTf3/As2s6U+D8idB5dMg+iRIPatH6jkZSZokiNVPYM4ARVEC0/TfNSXsXjVFw8aZN1WpfulJVdl9BWwIEOIINrmXAxyCt3IQ1D+LtYLDio11uEeJQJRS0aDvPUTax7cJBOFBoKud0NsysGE+7q9dh+E3nB1EZqA8N5qHOm6///6GK2LUx/5ymOMvJ3w6ncIhMMZ7e2jNBDaQjbzjGvDQiw0jQmZxNbYky8WLkUwYpD/XZ9TbFogxOgnr0Uo0XSC7N+wHKDMbqu8YfmCIzuezUf7LvBUs9D5AECWdDY6aqw0SNb+FOduIop7Z7V53220HPbDg+HS1waMZ78+ntqY/Ht7ttv52t9uNkMUcGh8haaoWl1+cQMc6ZnsHuSwxQoqBJLr+iizLK7ztGCfUR56XLDc9KUXEL+cERg0BQYHZDcwjyKRWlvAHg1qGHaSBRGaHli62F8ZC/wMeiKGfRGLa4QAAAABJRU5ErkJggg==';
-document.getElementById('fav').href = LOGO;
+const FAVICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#35b8ff"/><stop offset="1" stop-color="#123b72"/></linearGradient></defs><rect width="64" height="64" rx="18" fill="url(#g)"/><text x="32" y="46" text-anchor="middle" font-size="40" font-family="Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji,sans-serif">🐺</text></svg>';
+document.getElementById('fav').href = 'data:image/svg+xml,' + encodeURIComponent(FAVICON);
 document.getElementById('brand').prepend(Object.assign(document.createElement('img'), { src: LOGO, alt: 'BlueHunter' }));
 
 const app = document.getElementById('app');
@@ -475,7 +519,7 @@ const FEATURES = [
 
 function renderNav() {
   document.getElementById('nav').replaceChildren(
-    h('a', { href: '#/' }, 'Status'), me.owner ? h('a', { href: '#/owner' }, 'Owner panel') : '', h('a', { href: '#/changelog' }, 'Changelog'),    me.signedIn ? h('button', { onclick: async () => {
+    h('a', { href: '#/' }, 'Status'), h('a', { href: '#/groupchats' }, 'Group chats'), me.owner ? h('a', { href: '#/owner' }, 'Owner panel') : '', h('a', { href: '#/changelog' }, 'Changelog'),    me.signedIn ? h('button', { onclick: async () => {
       await api('/logout', { method: 'POST', body: '{}' }).catch(() => {});
       me = { signedIn: false, groups: [] }; renderNav();
       location.hash === '#/' ? route() : (location.hash = '#/');
@@ -1298,10 +1342,209 @@ async function dash(id) {
 
 function route() {
   leave();
+  document.title = 'BlueHunter';
   const m = location.hash.match(/^#\/g\/([0-9-]+)$/);
+  if (location.hash === '#/groupchats' || (location.pathname === '/groupchats' && !location.hash)) return groupChats();
   if (location.hash === '#/changelog') return changelog();
   if (location.hash === '#/owner') return ownerPanel();
   m ? dash(m[1]) : home();
+}
+
+async function groupChats() {
+  document.title = 'BlueHunter discoverable group chats';
+  const pageSize = 18;
+  let currentPage = 0;
+  const search = h('input', { type: 'search', placeholder: 'Search group chats', 'aria-label': 'Search group chats' });
+  const flairEmojis = {
+    Friendly: '😊', SFW: '🛡️', NSFW: '🔞', Politics: '🗳️', Religion: '🙏',
+    Vawulence: '🌶️', Roast: '🎤', Active: '🔥', Giveaway: '🎁',
+    'No underage': '🚫🧒', Bot: '🤖', Gamer: '🎮',
+    Technology: '💻', Nigeria: '🇳🇬', Ghana: '🇬🇭', Kenya: '🇰🇪',
+    'South Africa': '🇿🇦', 'United Kingdom': '🇬🇧', 'United States': '🇺🇸',
+  };
+  const flairBadge = (label) => h('span', {
+    class: 'directory-flair',
+    title: label,
+    'aria-label': label + ' flair',
+  },
+  h('span', { class: 'directory-flair-icon', 'aria-hidden': 'true' }, flairEmojis[label] || '🏷️'),
+  h('span', {}, label));
+  const resetPageAndDraw = () => { currentPage = 0; draw(); };
+  const flairFilter = h('select', { 'aria-label': 'Filter by flair', onchange: resetPageAndDraw },
+    h('option', { value: '' }, 'All flairs'),
+    Object.entries(flairEmojis).map(([label, emoji]) => h('option', { value: label }, `${emoji} ${label}`)));
+  const sizeFilter = h('select', { 'aria-label': 'Filter by group size', onchange: resetPageAndDraw },
+    h('option', { value: 'all' }, 'Any size'),
+    h('option', { value: 'small' }, 'Under 50 members'),
+    h('option', { value: 'medium' }, '50–199 members'),
+    h('option', { value: 'large' }, '200+ members'));
+  const activityFilter = h('select', { 'aria-label': 'Filter by recent activity', onchange: resetPageAndDraw },
+    h('option', { value: 'all' }, 'Any activity'),
+    h('option', { value: 'active' }, 'Active · 1+ msgs / 7d'),
+    h('option', { value: 'inactive' }, 'Inactive · 0 msgs / 7d'));
+  const sortBy = h('select', { 'aria-label': 'Sort groups', onchange: resetPageAndDraw },
+    h('option', { value: 'bumped' }, 'Recently bumped'),
+    h('option', { value: 'active' }, 'Most active'),
+    h('option', { value: 'quiet' }, 'Least active'),
+    h('option', { value: 'largest' }, 'Largest groups'),
+    h('option', { value: 'smallest' }, 'Smallest groups'));
+  const list = h('div', { class: 'directory-list' }, h('p', { style: 'color:var(--mute)' }, 'Loading groups\u2026'));
+  const refresh = h('button', { class: 'btn ghost', onclick: load }, 'Refresh');
+  const pageSummary = h('span', { class: 'directory-page-summary', 'aria-live': 'polite' });
+  const previousPage = h('button', {
+    class: 'btn ghost',
+    type: 'button',
+    'aria-label': 'Previous group results page',
+    onclick: () => { if (currentPage > 0) { currentPage--; draw(); } },
+  }, '← Previous');
+  const nextPage = h('button', {
+    class: 'btn ghost',
+    type: 'button',
+    'aria-label': 'Next group results page',
+    onclick: () => { currentPage++; draw(); },
+  }, 'Next →');
+  const pagination = h('nav', { class: 'directory-pagination', 'aria-label': 'Group results pages' },
+    previousPage, pageSummary, nextPage);
+  const detailsDialog = h('dialog', { class: 'directory-dialog', 'aria-labelledby': 'directory-detail-title' });
+  document.body.append(detailsDialog);
+  stops.push(() => { if (detailsDialog.open) detailsDialog.close(); detailsDialog.remove(); });
+  let groups = [];
+  async function showDetails(group) {
+    const close = h('button', { class: 'dclose', onclick: () => detailsDialog.close(), 'aria-label': 'Close group details' }, 'Close');
+    detailsDialog.replaceChildren(h('div', { class: 'dtop' }, h('h2', { id: 'directory-detail-title' }, group.name), close), h('p', {}, 'Loading group details\u2026'));
+    detailsDialog.showModal();
+    try {
+      const detail = await api('/groupchats/' + encodeURIComponent(group.id));
+      const flairs = detail.flairs.length
+        ? h('div', { class: 'dflairs', 'aria-label': 'Group flairs' }, detail.flairs.map(flairBadge))
+        : '';
+      const consent = h('input', { type: 'checkbox', 'aria-label': 'Agree to WhatsApp terms and group rules' });
+      const agree = h('button', { class: 'btn', disabled: true, onclick: async () => {
+        agree.disabled = true;
+        try {
+          const result = await api('/groupchats/' + encodeURIComponent(detail.id) + '/join-link', {
+            method: 'POST',
+            body: JSON.stringify({ accepted: true }),
+          });
+          joinArea.replaceChildren(h('a', { class: 'btn join-link', href: result.url, target: '_blank', rel: 'noopener noreferrer' }, 'Continue to WhatsApp ↗'));
+        } catch (e) {
+          joinError.textContent = e.message;
+          agree.disabled = !consent.checked;
+        }
+      } }, 'Agree & show invite');
+      consent.addEventListener('change', () => { agree.disabled = !consent.checked; });
+      const joinError = h('p', { class: 'err', role: 'alert' });
+      const joinArea = h('div', {}, agree, joinError);
+      const joinInfo = detail.discoverable
+        ? h('div', {},
+          h('label', { class: 'consent' }, consent,
+            h('span', {}, 'I agree to WhatsApp\u2019s Terms of Service and this group\u2019s description and rules.')),
+          h('small', {}, 'Read WhatsApp\u2019s ',
+            h('a', { href: 'https://www.whatsapp.com/legal/terms-of-service', target: '_blank', rel: 'noopener noreferrer' }, 'Terms of Service'),
+            '.'),
+          joinArea)
+        : h('p', {}, '🔒 The group admins have not enabled public invite links. You can still review the group details and flairs.');
+      detailsDialog.replaceChildren(
+        h('div', { class: 'dtop' }, h('h2', { id: 'directory-detail-title' }, detail.name), close),
+        h('p', {}, detail.description || 'No group description set.'),
+        flairs,
+        h('div', { class: 'meta' }, h('span', {}, plural(detail.members, 'member'))),
+        joinInfo
+      );
+    } catch (e) {
+      detailsDialog.replaceChildren(h('div', { class: 'dtop' }, h('h2', {}, 'Group unavailable'), close), h('p', { class: 'err', role: 'alert' }, e.message));
+    }
+  }
+  function draw() {
+    const query = search.value.trim().toLowerCase();
+    const rows = groups.filter((g) => {
+      const messages = g.weeklyMessages || 0;
+      const queryMatch = !query || g.name.toLowerCase().includes(query) || g.description.toLowerCase().includes(query);
+      const flairMatch = !flairFilter.value || (g.flairs || []).includes(flairFilter.value);
+      const sizeMatch = sizeFilter.value === 'all' ||
+        (sizeFilter.value === 'small' && g.members < 50) ||
+        (sizeFilter.value === 'medium' && g.members >= 50 && g.members < 200) ||
+        (sizeFilter.value === 'large' && g.members >= 200);
+      const activityMatch = activityFilter.value === 'all' ||
+        (activityFilter.value === 'active' && messages > 0) ||
+        (activityFilter.value === 'inactive' && messages === 0);
+      return queryMatch && flairMatch && sizeMatch && activityMatch;
+    });
+    const compare = {
+      bumped: (a, b) => new Date(b.lastBumpedAt || 0) - new Date(a.lastBumpedAt || 0),
+      active: (a, b) => b.weeklyMessages - a.weeklyMessages,
+      quiet: (a, b) => a.weeklyMessages - b.weeklyMessages,
+      largest: (a, b) => b.members - a.members,
+      smallest: (a, b) => a.members - b.members,
+    }[sortBy.value];
+    rows.sort((a, b) => compare(a, b) || a.name.localeCompare(b.name));
+    const pageCount = Math.ceil(rows.length / pageSize);
+    currentPage = Math.min(currentPage, Math.max(0, pageCount - 1));
+    const start = currentPage * pageSize;
+    const pageRows = rows.slice(start, start + pageSize);
+    pageSummary.textContent = rows.length
+      ? `Showing ${start + 1}–${Math.min(start + pageSize, rows.length)} of ${rows.length} groups`
+      : '0 groups';
+    previousPage.disabled = currentPage === 0;
+    nextPage.disabled = currentPage >= pageCount - 1;
+    list.replaceChildren(...(pageRows.length ? pageRows.map((g, pageIndex) => {
+      const index = start + pageIndex;
+      const bump = g.lastBumpedAt ? new Date(g.lastBumpedAt) : null;
+      const bumpLabel = bump && !Number.isNaN(bump.getTime()) ? 'Last bumped ' + bump.toLocaleString() : 'Not bumped yet';
+      const countryFlags = (g.flairs || []).filter((flair) =>
+        ['Nigeria', 'Ghana', 'Kenya', 'South Africa', 'United Kingdom', 'United States'].includes(flair));
+      return h('article', {
+        class: 'directory-card' + (index < 3 ? ` top-${index + 1}` : ''),
+        role: 'button',
+        tabindex: '0',
+        'aria-haspopup': 'dialog',
+        onclick: () => showDetails(g),
+        onkeydown: (event) => {
+          if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showDetails(g); }
+        },
+      },
+        h('div', { class: 'directory-avatar', 'aria-hidden': 'true' }, (g.name.trim()[0] || '?').toUpperCase()),
+        h('div', { class: 'directory-main' },
+          h('h3', {}, h('span', { class: 'rank-chip' },
+          index < 3 ? h('span', { class: 'rank-flame', 'aria-hidden': 'true' }, '🔥') : '',
+          '#' + (index + 1),
+          index < 3 ? h('span', { class: 'rank-spark', 'aria-hidden': 'true' }, ['HOT', 'RISING', 'ON FIRE'][index]) : ''),
+            g.name,
+            countryFlags.length ? h('span', {
+              class: 'directory-country',
+              title: countryFlags.join(', '),
+              'aria-label': 'Country: ' + countryFlags.join(', '),
+            }, countryFlags.map((flair) => flairEmojis[flair]).join('')) : ''),
+          g.description ? h('p', {}, g.description) : h('p', {}, 'No group description set.'),
+          g.flairs?.length ? h('div', { class: 'directory-flairs', 'aria-label': 'Self-reported group flairs' }, g.flairs.map(flairBadge)) : ''),
+        h('span', { class: 'directory-open' }, 'View details →'),
+        h('div', { class: 'meta' },
+          h('span', {}, plural(g.members, 'member')),
+          h('span', {}, (g.weeklyMessages > 0 ? '🔥 Active · ' : '💤 Inactive · ') + plural(g.weeklyMessages, 'message') + ' / 7d'),
+          h('span', {}, bumpLabel),
+          h('span', {}, g.discoverable ? '🔎 Open to join' : '🔒 Invite hidden')));
+    }) : [h('div', { class: 'emptybox' }, h('b', {}, groups.length ? 'No matching groups' : 'No groups to show'), groups.length ? 'Try another search.' : 'BlueHunter is not currently in any groups.')]));
+  }
+  search.addEventListener('input', resetPageAndDraw);
+  async function load() {
+    refresh.disabled = true;
+    list.replaceChildren(h('p', { style: 'color:var(--mute)' }, 'Loading groups\u2026'));
+    try { groups = (await api('/groupchats')).groups; currentPage = 0; draw(); }
+    catch (e) { list.replaceChildren(h('p', { class: 'err', role: 'alert' }, e.message)); }
+    refresh.disabled = false;
+  }
+  app.replaceChildren(
+    h('section', { class: 'hero' }, h('div', { class: 'txt' },
+      h('a', { href: '#/' }, '\u2190 Back to BlueHunter'),
+      h('h1', { class: 'headline sm' }, 'BlueHunter discoverable group chats'),
+      h('p', { class: 'facts' }, 'Find a group that fits you.'))),
+    h('section', { class: 'blk' },
+      h('p', {}, 'Filter by flair, size, or activity. No messages in 7 days means inactive. Admins use /discoverable on to share an invite, /flair for emoji tags; members can /bump once per day.'),
+      h('div', { class: 'directory-filters' }, search, flairFilter, sizeFilter, activityFilter, sortBy, refresh),
+      list,
+      pagination)
+  );
+  await load();
 }
 
 

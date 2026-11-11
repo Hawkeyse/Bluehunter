@@ -108,6 +108,7 @@ const fails = new Map(); // ip -> [timestamps]
 let ctx = { sock: null, getStatus: null };
 let lagMs = 0;
 let indexHtml = null;
+let groupDirectoryCache = { at: 0, groups: null };
 
 const webEnabled = () => String(process.env.WEB_ENABLED || 'true').toLowerCase() !== 'false';
 const webUrl = () => (process.env.WEB_URL || '').replace(/\/+$/, '');
@@ -313,6 +314,7 @@ async function buildNamer(jid, chat) {
 const INACTIVE_DAYS = 14;
 const DAILY_GRAPH_DAYS = 14;
 const MAX_KICK_BATCH = 50;
+const GROUP_DIRECTORY_CACHE_MS = 10_000;
 // Anyone who joined in the last 24 hours is left out of the low-activity list
 // and can't be removed from the dashboard: they haven't had a fair chance to talk.
 const RECENT_JOIN_MS = 24 * 60 * 60 * 1000;
@@ -447,6 +449,11 @@ async function sessionIsOwner(session) {
 }
 
 let ownerGroupsCache = { at: 0, list: null };
+function invalidateGroupCaches() {
+  ownerGroupsCache = { at: 0, list: null };
+  groupDirectoryCache = { at: 0, groups: null };
+}
+
 async function ownerGroups(force) {
   if (!force && ownerGroupsCache.list && Date.now() - ownerGroupsCache.at < 30000) return ownerGroupsCache.list;
   const all = await ctx.sock.groupFetchAllParticipating();
@@ -517,7 +524,7 @@ async function route(req, res) {
   // Public homepage: paste an invite link and the bot joins. The admin
   // dashboard is at /dashboard (index.html still answers, for old links).
   if (get && (p === '/' || p === '/join')) return page(res, 'join.html');
-  if (get && (p === '/dashboard' || p === '/index.html')) return page(res);
+  if (get && (p === '/dashboard' || p === '/index.html' || p === '/groupchats')) return page(res);
   if (!p.startsWith('/api/')) return json(res, 404, { error: 'Not found' });
 
   if (!get) {
@@ -601,6 +608,109 @@ async function route(req, res) {
 
   if (get && p === '/api/status') return json(res, 200, { ...status(), maintenance: await getMaintenance() });
   if (get && p === '/api/changelog') return json(res, 200, { entries: CHANGELOG });
+  if (get && p === '/api/groupchats') {
+    if (groupDirectoryCache.groups && Date.now() - groupDirectoryCache.at < GROUP_DIRECTORY_CACHE_MS) {
+      return json(res, 200, { groups: groupDirectoryCache.groups });
+    }
+
+    if (!ctx.sock?.groupFetchAllParticipating) {
+      return json(res, 503, { error: 'BlueHunter is not connected to WhatsApp right now.' });
+    }
+
+    const all = await ctx.sock.groupFetchAllParticipating();
+    const metas = Object.values(all || {}).filter((m) => m && m.id && String(m.id).endsWith('@g.us'));
+    const groupIds = metas.map((m) => String(m.id));
+    const keys = [];
+    for (let i = 6; i >= 0; i--) keys.push(new Date(Date.now() - i * 86_400_000).toISOString().slice(0, 10));
+    const [activityRows, settingsRows] = await Promise.all([
+      groupIds.length
+        ? GroupDailyActivity.find({ groupId: { $in: groupIds }, date: { $in: keys } }).select('groupId date count').lean()
+        : [],
+      groupIds.length
+        ? GroupSettings.find({ groupId: { $in: groupIds } }).select('groupId lastBumpedAt directoryFlairs directoryDiscoverable').lean()
+        : [],
+    ]);
+
+    const activityByGroup = new Map();
+    for (const row of activityRows) {
+      const current = activityByGroup.get(row.groupId) || 0;
+      activityByGroup.set(row.groupId, current + (row.count || 0));
+    }
+    const settingsByGroup = new Map(settingsRows.map((row) => [row.groupId, row]));
+    const groups = metas.map((meta) => {
+      const settings = settingsByGroup.get(meta.id);
+      return {
+        id: String(meta.id).replace(/@g\.us$/, ''),
+        name: String(meta.subject || meta.id.split('@')[0]),
+        description: String(meta.desc || ''),
+        members: Array.isArray(meta.participants) ? meta.participants.length : 0,
+        weeklyMessages: activityByGroup.get(meta.id) || 0,
+        lastBumpedAt: settings?.lastBumpedAt || null,
+        flairs: settings?.directoryFlairs || [],
+        discoverable: !!settings?.directoryDiscoverable,
+      };
+    }).sort((a, b) => {
+      const bumpA = a.lastBumpedAt ? new Date(a.lastBumpedAt).getTime() : 0;
+      const bumpB = b.lastBumpedAt ? new Date(b.lastBumpedAt).getTime() : 0;
+      return bumpB - bumpA || b.weeklyMessages - a.weeklyMessages || a.name.localeCompare(b.name);
+    });
+
+    groupDirectoryCache = { at: Date.now(), groups };
+    return json(res, 200, { groups });
+  }
+
+  const directoryGroup = p.match(/^\/api\/groupchats\/([0-9-]{5,40})$/);
+  if (get && directoryGroup) {
+    const ip = clientIp(req);
+    if (!infoAllowed(ip)) return json(res, 429, { error: 'You have opened a lot of group details. Wait a minute and try again.' });
+    if (!ctx.sock?.groupFetchAllParticipating) {
+      return json(res, 503, { error: 'BlueHunter is offline right now. Try again shortly.' });
+    }
+
+    const groupId = `${directoryGroup[1]}@g.us`;
+    const all = await ctx.sock.groupFetchAllParticipating();
+    const meta = all && all[groupId];
+    if (!meta) return json(res, 404, { error: 'This group is no longer available in BlueHunter Discover.' });
+    const settings = await GroupSettings.findOne({ groupId }).select('directoryFlairs directoryDiscoverable').lean();
+    return json(res, 200, {
+      id: directoryGroup[1],
+      name: String(meta.subject || directoryGroup[1]),
+      description: String(meta.desc || ''),
+      members: Array.isArray(meta.participants) ? meta.participants.length : 0,
+      flairs: settings?.directoryFlairs || [],
+      discoverable: !!settings?.directoryDiscoverable,
+    });
+  }
+
+  const directoryJoin = p.match(/^\/api\/groupchats\/([0-9-]{5,40})\/join-link$/);
+  if (req.method === 'POST' && directoryJoin) {
+    const ip = clientIp(req);
+    if (!infoAllowed(ip)) return json(res, 429, { error: 'You have requested several invite links. Wait a minute and try again.' });
+    let body;
+    try { body = await readJson(req); }
+    catch (err) { return json(res, err.status || 400, { error: err.message || 'Invalid request.' }); }
+    if (body.accepted !== true) return json(res, 400, { error: 'Please accept the join notice before continuing.' });
+    if (!ctx.sock?.groupFetchAllParticipating || typeof ctx.sock.groupInviteCode !== 'function') {
+      return json(res, 503, { error: 'BlueHunter cannot retrieve group invite links right now.' });
+    }
+
+    const groupId = `${directoryJoin[1]}@g.us`;
+    const all = await ctx.sock.groupFetchAllParticipating();
+    if (!all || !all[groupId]) return json(res, 404, { error: 'This group is no longer available in BlueHunter Discover.' });
+    const settings = await GroupSettings.findOne({ groupId }).select('directoryDiscoverable').lean();
+    if (!settings?.directoryDiscoverable) return json(res, 403, { error: 'This group is not currently accepting directory joins.' });
+
+    let code;
+    try { code = await ctx.sock.groupInviteCode(groupId); }
+    catch (err) {
+      logger.warn(`Directory invite link unavailable for ${groupId}: ${err.message}`);
+      return json(res, 502, { error: 'WhatsApp could not provide this group’s invite link. Please try again later.' });
+    }
+    if (!code || !/^[A-Za-z0-9_-]+$/.test(code)) {
+      return json(res, 502, { error: 'WhatsApp did not return a valid invite link for this group.' });
+    }
+    return json(res, 200, { url: `https://chat.whatsapp.com/${code}` });
+  }
 
   if (req.method === 'POST' && p === '/api/login') {
     const ip = clientIp(req);
@@ -672,7 +782,7 @@ async function route(req, res) {
         try { await ctx.sock.groupLeave(jid); }
         catch (err) { return json(res, 502, { error: 'WhatsApp would not let the bot leave right now. Try again in a moment.' }); }
         logger.warn(`Owner ${normalizeId(session.senderId)} made the bot leave ${jid} from the website`);
-        ownerGroupsCache = { at: 0, list: null };
+        invalidateGroupCaches();
         return json(res, 200, { ok: true });
       }
       const text = String(body.text || '').trim();
@@ -1078,4 +1188,4 @@ function startWebServer({ sock, getStatus }) {
   server.listen(port, '0.0.0.0', () => logger.info(`Web dashboard listening on port ${port}`));
 }
 
-module.exports = { startWebServer, issueCode, webEnabled, webUrl };
+module.exports = { startWebServer, issueCode, webEnabled, webUrl, invalidateGroupCaches };
