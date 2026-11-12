@@ -2,6 +2,7 @@ const YoutubeWatch = require('../models/YoutubeWatch');
 const { fetchLatestVideos } = require('./youtubeRss');
 const { fetchVideoData, pickMuxedVideoFormat, downloadMediaBuffer } = require('./ytDownload');
 const { createLimiter } = require('./limiter');
+const { sendSocialAlert } = require('./socialAlertDelivery');
 const {
   YOUTUBE_ALERT_CHECK_INTERVAL_MS,
   RAPIDAPI_KEY,
@@ -46,7 +47,7 @@ async function attachYoutubeVideo(sock, watch, video) {
 
   const buffer = await downloadMediaBuffer(format.url, { maxBytes });
   const safeTitle = video.title.replace(/[\\/:*?"<>|]/g, '').slice(0, 60) || video.videoId;
-  await sock.sendMessage(watch.groupId, {
+  await sendSocialAlert(sock, watch, {
     video: buffer,
     mimetype: 'video/mp4',
     fileName: `${safeTitle}.mp4`,
@@ -55,7 +56,7 @@ async function attachYoutubeVideo(sock, watch, video) {
 }
 
 async function sendYoutubeAlert(sock, watch, video) {
-  await sock.sendMessage(watch.groupId, { text: buildAlertMessage(watch, video) });
+  await sendSocialAlert(sock, watch, { text: buildAlertMessage(watch, video) });
   if (watch.includeVideo && RAPIDAPI_KEY) {
     if (videoUploadLimiter.stats().queued >= 20) {
       logger.warn('YouTube alert video skipped for', video.videoId, '- upload queue is full.');

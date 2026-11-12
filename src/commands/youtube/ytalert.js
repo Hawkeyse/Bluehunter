@@ -6,7 +6,7 @@ module.exports = {
   name: 'ytalert',
   aliases: ['youtubealert'],
   category: 'youtube',
-  description: '/ytalert add|remove|list|media <channel> - manage YouTube upload alerts and authorized MP4 reposts',
+  description: '/ytalert add|remove|list|media|destination <...> - manage YouTube alerts',
   adminOnly: true,
   groupOnly: true,
   async execute({ msg, chat, args, senderId }) {
@@ -44,10 +44,38 @@ module.exports = {
       );
     }
 
+    if (sub === 'destination') {
+      const requestedDestination = (args[1] || '').toLowerCase();
+      const destination = requestedDestination === 'groupstatus' ? 'groupStatus' : requestedDestination;
+      const target = args.slice(2).join(' ').trim();
+      if (!['group', 'groupStatus'].includes(destination) || !target) {
+        return msg.reply('Usage: /ytalert destination group|groupstatus <channel name or list number>');
+      }
+
+      const watches = await YoutubeWatch.find({ groupId });
+      const match = /^\d+$/.test(target)
+        ? watches[Number.parseInt(target, 10) - 1]
+        : watches.find((w) =>
+          w.channelId === target ||
+          (w.channelTitle || '').toLowerCase() === target.toLowerCase()
+        );
+      if (!match) return msg.reply(`Couldn't find a watched channel matching "${target}". Check /ytalert list.`);
+
+      match.destination = destination;
+      await match.save();
+      return msg.reply(
+        destination === 'groupStatus'
+          ? `✅ Alerts for *${match.channelTitle || match.channelId}* will be posted as Group Status updates in this group.`
+          : `✅ Alerts for *${match.channelTitle || match.channelId}* will be posted in this group chat.`
+      );
+    }
+
     if (sub === 'list') {
       const watches = await YoutubeWatch.find({ groupId });
       if (!watches.length) return msg.reply('No YouTube channels are being watched in this group yet. Add one: /ytalert add <channel>');
-      const list = watches.map((w, i) => `${i + 1}. ${w.channelTitle || w.channelId}${w.includeVideo ? ' · MP4 on' : ''}`).join('\n');
+      const list = watches
+        .map((w, i) => `${i + 1}. ${w.channelTitle || w.channelId}${w.includeVideo ? ' · MP4 on' : ''}${w.destination === 'groupStatus' ? ' · group status' : ''}`)
+        .join('\n');
       return msg.reply(`📺 Watched channels in this group:\n${list}`);
     }
 
@@ -123,6 +151,7 @@ module.exports = {
 
     return msg.reply(
       'Usage:\n/ytalert add <channel URL, @handle, or channel ID>\n/ytalert remove <name or number>\n/ytalert list\n/ytalert media on|off <name or number> (only for channels you own or may repost)'
+      + '\n/ytalert destination group|groupstatus <name or number>'
     );
   },
 };

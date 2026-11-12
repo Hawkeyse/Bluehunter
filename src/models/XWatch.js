@@ -5,6 +5,7 @@ const xWatchSchema = new mongoose.Schema(
     groupId: { type: String, required: true, index: true },
     username: { type: String, required: true }, // lowercase, no @
     displayName: { type: String, default: '' },
+    destination: { type: String, enum: ['group', 'groupStatus'], default: 'group' },
     // Newest tweet already alerted. Set to the current newest on add so
     // old posts aren't blasted into the group.
     lastTweetId: { type: String, default: null },

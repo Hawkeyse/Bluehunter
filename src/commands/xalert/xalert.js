@@ -5,7 +5,7 @@ module.exports = {
   name: 'xalert',
   aliases: ['twitteralert'],
   category: 'xalert',
-  description: '/xalert add|remove|list <@user> - post here whenever an X account posts',
+  description: '/xalert add|remove|list|destination <...> - manage X post alerts',
   adminOnly: true,
   groupOnly: true,
   async execute({ msg, chat, args, senderId }) {
@@ -15,7 +15,34 @@ module.exports = {
     if (sub === 'list') {
       const watches = await XWatch.find({ groupId });
       if (!watches.length) return msg.reply('No X accounts watched here yet. Add one: /xalert add @user');
-      return msg.reply(`🐦 Watched X accounts:\n${watches.map((w, i) => `${i + 1}. @${w.username}`).join('\n')}`);
+      const list = watches
+        .map((w, i) => `${i + 1}. @${w.username}${w.destination === 'groupStatus' ? ' · group status' : ''}`)
+        .join('\n');
+      return msg.reply(`🐦 Watched X accounts:\n${list}`);
+    }
+
+    if (sub === 'destination') {
+      const requestedDestination = (args[1] || '').toLowerCase();
+      const destination = requestedDestination === 'groupstatus' ? 'groupStatus' : requestedDestination;
+      const target = args.slice(2).join(' ').trim();
+      if (!['group', 'groupStatus'].includes(destination) || !target) {
+        return msg.reply('Usage: /xalert destination group|groupstatus <@user or list number>');
+      }
+
+      const watches = await XWatch.find({ groupId });
+      const username = normalizeUsername(target);
+      const match = /^\d+$/.test(target)
+        ? watches[Number.parseInt(target, 10) - 1]
+        : watches.find((w) => w.username === username);
+      if (!match) return msg.reply(`Couldn't find "${target}". Check /xalert list.`);
+
+      match.destination = destination;
+      await match.save();
+      return msg.reply(
+        destination === 'groupStatus'
+          ? `✅ Alerts for *@${match.username}* will be posted as Group Status updates in this group.`
+          : `✅ Alerts for *@${match.username}* will be posted in this group chat.`
+      );
     }
 
     if (sub === 'remove') {
@@ -58,6 +85,6 @@ module.exports = {
       return msg.reply(`✅ Now watching *@${username}*.\nI'll check about every 30 seconds and post here when they publish. The feed provider can affect delivery speed.`);
     }
 
-    return msg.reply('Usage:\n/xalert add <@user or link>\n/xalert remove <@user or number>\n/xalert list');
+    return msg.reply('Usage:\n/xalert add <@user or link>\n/xalert remove <@user or number>\n/xalert list\n/xalert destination group|groupstatus <@user or number>');
   },
 };

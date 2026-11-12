@@ -89,6 +89,31 @@ test('channels without explicit video permission receive RSS alerts only', async
   assert.equal(state.downloads, 0);
 });
 
+test('Group Status destination relays YouTube alerts inside the watched group', async () => {
+  const sent = [];
+  const sock = {
+    user: { id: 'bot@s.whatsapp.net' },
+    async relayMessage(...args) { sent.push(args); },
+  };
+
+  await sendYoutubeAlert(
+    sock,
+    { groupId: 'youtube-status@g.us', channelTitle: 'My Channel', destination: 'groupStatus', includeVideo: false },
+    { videoId: 'video-status', title: 'Status upload', url: 'https://youtube.com/watch?v=video-status' }
+  );
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0][0], 'youtube-status@g.us');
+  const decoded = require('@whiskeysockets/baileys').proto.Message.decode(
+    require('@whiskeysockets/baileys').proto.Message.encode(sent[0][1]).finish()
+  );
+  assert.match(decoded.groupStatusMessage.message.extendedTextMessage.text, /Status upload/);
+  assert.deepEqual(sent[0][2].additionalNodes, [{
+    tag: 'meta',
+    attrs: { is_group_status: 'true', origin: 'group_status' },
+  }]);
+});
+
 test('videos beyond the duration limit remain link-only', async () => {
   state.duration = '901';
   state.downloads = 0;

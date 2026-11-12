@@ -3,6 +3,7 @@ const { fetchLatestTweets, isNewer, resolveVideoUrl } = require('./xTimeline');
 const { X_ALERT_CHECK_INTERVAL_MS, SOCIAL_DOWNLOAD_MAX_FILE_SIZE_MB } = require('../config');
 const { downloadMediaBuffer } = require('./rapidapiClient');
 const logger = require('./logger');
+const { sendSocialAlert } = require('./socialAlertDelivery');
 
 function buildAlertMessage(username, name, tweet) {
   const text = tweet.text.length > 600 ? `${tweet.text.slice(0, 600)}…` : tweet.text;
@@ -11,14 +12,14 @@ function buildAlertMessage(username, name, tweet) {
 
 
 // Send media after the text alert; an unavailable attachment must not delay it.
-async function sendTweetMedia(sock, groupId, tweet, username) {
+async function sendTweetMedia(sock, watch, tweet, username) {
   if (tweet.hasVideo) {
     try {
       const found = tweet.videoUrl ? { url: tweet.videoUrl, isGif: false } : await resolveVideoUrl(username, tweet.id);
       if (found) {
         const maxMB = SOCIAL_DOWNLOAD_MAX_FILE_SIZE_MB || 50;
         const buffer = await downloadMediaBuffer(found.url, { maxBytes: maxMB * 1024 * 1024, timeoutMs: 90_000 });
-        await sock.sendMessage(groupId, { video: buffer, mimetype: 'video/mp4', ...(found.isGif ? { gifPlayback: true } : {}) });
+        await sendSocialAlert(sock, watch, { video: buffer, mimetype: 'video/mp4', ...(found.isGif ? { gifPlayback: true } : {}) });
         return;
       }
     } catch (err) {
@@ -29,18 +30,18 @@ async function sendTweetMedia(sock, groupId, tweet, username) {
   for (const url of tweet.images || []) {
     try {
       const buffer = await downloadMediaBuffer(url, { maxBytes: 15 * 1024 * 1024, timeoutMs: 30_000 });
-      await sock.sendMessage(groupId, { image: buffer });
+      await sendSocialAlert(sock, watch, { image: buffer });
     } catch (err) {
       logger.warn('X alert image failed:', url, '-', err.message);
     }
   }
 }
 
-async function sendTweet(sock, groupId, caption, tweet, username) {
+async function sendTweet(sock, watch, caption, tweet, username) {
   // Alert with the text immediately. Media lookups/downloads can take much
   // longer than the feed request and must not hold up the actual notification.
-  await sock.sendMessage(groupId, { text: caption });
-  sendTweetMedia(sock, groupId, tweet, username).catch((err) => {
+  await sendSocialAlert(sock, watch, { text: caption });
+  sendTweetMedia(sock, watch, tweet, username).catch((err) => {
     logger.warn('X alert media failed for', tweet.id, '-', err.message);
   });
 }
@@ -103,7 +104,7 @@ function startXAlertScheduler(sock) {
                 const fresh = tweets.filter((t) => isNewer(t.id, watch.lastTweetId)).reverse(); // oldest-first
                 if (!fresh.length) continue;
                 for (const t of fresh.slice(-5)) {
-                  await sendTweet(sock, watch.groupId, buildAlertMessage(username, t.name || watch.displayName, t), t, username);
+                  await sendTweet(sock, watch, buildAlertMessage(username, t.name || watch.displayName, t), t, username);
                 }
                 watch.lastTweetId = latest.id;
                 await watch.save();

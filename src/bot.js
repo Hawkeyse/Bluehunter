@@ -153,6 +153,17 @@ function installSendWrapper(sock) {
     rememberSent(sent);
     return sent;
   };
+
+  const rawRelay = sock.relayMessage.bind(sock);
+  sock.relayMessage = async (jid, message, options = {}) => {
+    const isGroupStatus = (options.additionalNodes || []).some(
+      (node) => node.tag === 'meta' && node.attrs?.is_group_status === 'true'
+    );
+    if (SEND_GAP_MS > 0 && isGroupStatus) await paceSend();
+    const sentId = await rawRelay(jid, message, options);
+    if (isGroupStatus && sentId) rememberSent({ key: { id: sentId }, message });
+    return sentId;
+  };
 }
 
 function scheduleReconnect(delayMs) {

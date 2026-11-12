@@ -5,6 +5,7 @@ const youtubeWatchSchema = new mongoose.Schema(
     groupId: { type: String, required: true, index: true },
     channelId: { type: String, required: true },
     channelTitle: { type: String, default: '' },
+    destination: { type: String, enum: ['group', 'groupStatus'], default: 'group' },
     // Repost video files only when an admin explicitly confirms this channel
     // is owned by them or they have permission to redistribute its uploads.
     includeVideo: { type: Boolean, default: false },
