@@ -28,6 +28,8 @@ const SiteNotice = require('../models/SiteNotice');
 const audit = require('../utils/auditLog');
 const AuditLog = require('../models/AuditLog');
 const Warning = require('../models/Warning');
+const XWatch = require('../models/XWatch');
+const YoutubeWatch = require('../models/YoutubeWatch');
 const EVIDENCE_DIR = path.resolve(path.join(__dirname, '..', '..', 'moderation-evidence'));
 
 const CODE_TTL_MS = 10 * 60_000;
@@ -794,6 +796,49 @@ async function route(req, res) {
       session.lastOwnerMsg = Date.now();
       return json(res, 200, { ok: true });
     }
+    return json(res, 404, { error: 'Not found.' });
+  }
+
+  // X and YouTube alert destinations are managed per watched feed.
+  const socialAlerts = p.match(/^\/api\/groups\/([0-9-]{5,40})\/social-alerts(?:\/(x|youtube)\/([a-f0-9]{24}))?$/);
+  if (socialAlerts) {
+    if (!session) return json(res, 401, { error: 'Sign in with a code first. Send /verify in a group with BlueHunter.' });
+    const jid = `${socialAlerts[1]}@g.us`;
+    const check = await requireAdmin(socialAlerts[1], session);
+    if (check.error) return json(res, check.status, { error: check.error });
+    const source = socialAlerts[2];
+    const watchId = socialAlerts[3];
+
+    if (get && !source) {
+      const [xWatches, youtubeWatches] = await Promise.all([
+        XWatch.find({ groupId: jid }).sort({ createdAt: 1 }),
+        YoutubeWatch.find({ groupId: jid }).sort({ createdAt: 1 }),
+      ]);
+      const view = (watch) => ({
+        id: String(watch._id),
+        destination: watch.destination === 'groupStatus' ? 'groupStatus' : 'group',
+      });
+      return json(res, 200, {
+        x: xWatches.map((watch) => ({ ...view(watch), username: watch.username, displayName: watch.displayName || '' })),
+        youtube: youtubeWatches.map((watch) => ({ ...view(watch), channelId: watch.channelId, channelTitle: watch.channelTitle || '' })),
+      });
+    }
+
+    if (req.method === 'PATCH' && source && watchId) {
+      const body = await readJson(req);
+      if (!body || !['group', 'groupStatus'].includes(body.destination)) {
+        return json(res, 400, { error: 'Destination must be group or groupStatus.' });
+      }
+
+      const Model = source === 'x' ? XWatch : YoutubeWatch;
+      const watch = await Model.findOne({ _id: watchId, groupId: jid });
+      if (!watch) return json(res, 404, { error: 'That watched feed was not found in this group.' });
+
+      watch.destination = body.destination;
+      await watch.save();
+      return json(res, 200, { ok: true, destination: watch.destination });
+    }
+
     return json(res, 404, { error: 'Not found.' });
   }
 

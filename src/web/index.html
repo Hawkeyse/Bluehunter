@@ -1318,16 +1318,88 @@ async function dash(id) {
     return { el, active(open) { if (open && !loaded) load(); } };
   }
 
+  function socialAlertsPane() {
+    const base = '/groups/' + id + '/social-alerts';
+    const list = h('div', { style: 'display:grid;gap:8px;margin-top:16px' });
+    let loaded = false;
+
+    function feedRow(source, item, name, detail) {
+      const destination = h('select', { 'aria-label': `Destination for ${name}` },
+        h('option', { value: 'group', selected: item.destination === 'group' }, 'Group chat'),
+        h('option', { value: 'groupStatus', selected: item.destination === 'groupStatus' }, 'Group Status'));
+      destination.addEventListener('change', async () => {
+        const previous = item.destination;
+        destination.disabled = true;
+        try {
+          await api(base + '/' + source + '/' + encodeURIComponent(item.id), {
+            method: 'PATCH',
+            body: JSON.stringify({ destination: destination.value }),
+          });
+          item.destination = destination.value;
+          toast('Alert destination saved');
+        } catch (e) {
+          destination.value = previous;
+          toast(e.message, true);
+        } finally {
+          destination.disabled = false;
+        }
+      });
+      return h('div', { class: 'row' },
+        h('span', {}, h('b', {}, name), detail ? h('small', {}, detail) : ''),
+        h('span', { class: 'ctl' }, destination));
+    }
+
+    function feedSection(title, source, items, describe) {
+      return h('section', { style: 'margin-top:24px' },
+        h('h3', {}, title),
+        items.length
+          ? items.map((item) => {
+            const details = describe(item);
+            return feedRow(source, item, details.name, details.detail);
+          })
+          : h('p', { class: 'rs' }, `No ${title.toLowerCase()} are watched in this group yet.`));
+    }
+
+    async function load() {
+      list.replaceChildren(h('p', { class: 'rs' }, 'Loading watched feeds...'));
+      try {
+        const d = await api(base);
+        loaded = true;
+        list.replaceChildren(
+          feedSection('X accounts', 'x', d.x, (item) => ({
+            name: item.displayName ? `${item.displayName} (@${item.username})` : `@${item.username}`,
+            detail: 'X post alerts',
+          })),
+          feedSection('YouTube channels', 'youtube', d.youtube, (item) => ({
+            name: item.channelTitle || item.channelId,
+            detail: item.channelId,
+          }))
+        );
+      } catch (e) {
+        list.replaceChildren(h('p', { class: 'rs' }, e.message));
+      }
+    }
+
+    const refresh = h('button', { class: 'btn ghost', type: 'button', onclick: load }, 'Refresh feeds');
+    const el = h('section', { class: 'blk' },
+      h('h2', {}, 'X & YouTube alerts'),
+      h('p', { class: 'rs' }, 'Choose where each watched feed posts in this group. Group Status uses an experimental Baileys relay; Group chat remains the default. Add or remove feeds with /xalert and /ytalert in WhatsApp.'),
+      refresh,
+      list);
+    return { el, active(open) { if (open && !loaded) load(); } };
+  }
+
   const ap = adminsPane();
   const dp = deletedPane();
   const rem = remindersPane();
-  const panes = { activity: h('div', {}, activityBlock()), admins: h('div', { hidden: true }, ap.el), reminders: h('div', { hidden: true }, rem.el), actions: h('div', { hidden: true }, actionsP.el), deleted: h('div', { hidden: true }, dp.el), changes: h('div', { hidden: true }, changesP.el), settings: settingsPane };
-  const tabDefs = [['activity', 'Activity'], ['admins', 'Owner & admins'], ['reminders', 'Reminder posts'], ['actions', 'Moderation log'], ['deleted', 'Deleted messages'], ['changes', 'Settings history'], ['settings', 'Settings']];
+  const social = socialAlertsPane();
+  const panes = { activity: h('div', {}, activityBlock()), admins: h('div', { hidden: true }, ap.el), reminders: h('div', { hidden: true }, rem.el), social: h('div', { hidden: true }, social.el), actions: h('div', { hidden: true }, actionsP.el), deleted: h('div', { hidden: true }, dp.el), changes: h('div', { hidden: true }, changesP.el), settings: settingsPane };
+  const tabDefs = [['activity', 'Activity'], ['admins', 'Owner & admins'], ['reminders', 'Reminder posts'], ['social', 'X & YouTube alerts'], ['actions', 'Moderation log'], ['deleted', 'Deleted messages'], ['changes', 'Settings history'], ['settings', 'Settings']];
   const tabBtns = tabDefs.map(([k, label]) => h('button', { class: 'tab' + (k === 'activity' ? ' on' : ''), onclick: () => openTab(k) }, label, k === 'deleted' ? dp.badge : ''));
   function openTab(k) {
     for (const [n, el] of Object.entries(panes)) el.hidden = n !== k;
     tabBtns.forEach((b, i) => b.classList.toggle('on', tabDefs[i][0] === k));
-    dp.active(k === 'deleted'); ap.active(k === 'admins'); rem.active(k === 'reminders'); actionsP.active(k === 'actions'); changesP.active(k === 'changes');
+    dp.active(k === 'deleted'); ap.active(k === 'admins'); rem.active(k === 'reminders'); social.active(k === 'social'); actionsP.active(k === 'actions'); changesP.active(k === 'changes');
   }
   dp.active(false);
   // the badge needs one early count even before the tab is opened
@@ -1336,7 +1408,7 @@ async function dash(id) {
   app.replaceChildren(
     h('section', { class: 'hero' }, avatar(), h('div', { class: 'txt' }, h('a', { href: '#/' }, '\u2190 Back to your groups'), h('h1', { class: 'headline sm' }, g.name), h('p', { class: 'facts' }, h('span', {}, plural(g.members, 'member'))))),
     h('div', { class: 'tabs' }, tabBtns),
-    panes.activity, panes.admins, panes.reminders, panes.actions, panes.deleted, panes.changes, panes.settings
+    panes.activity, panes.admins, panes.reminders, panes.social, panes.actions, panes.deleted, panes.changes, panes.settings
   );
 }
 
